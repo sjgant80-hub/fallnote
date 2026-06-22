@@ -7,5 +7,12 @@
   "spec": "https://www.ai-nativesolutions.com/spec.html",
   "licence": "MIT",
   "seal": "◊·κ=1",
-  "updatedAt": "2026-06-22"
+  "updatedAt": "2026-06-22",
+  "version": "2.0.0",
+  "features": {
+    "blockTypes": ["paragraph","h1","h2","h3","bullet","numbered","todo","toggle","quote","callout","code","image","divider","link-to-page"],
+    "dbViews": ["table","board","calendar"],
+    "dbProps": ["title","text","number","date","select","multi-select","checkbox"],
+    "ui": ["light-dark-theme","favourites","recent","trash","drag-drop-blocks","drag-drop-board","page-covers","page-icons","cmd-k-palette","wiki-links-with-autocomplete","backlinks","global-search","markdown-import","json-workspace-export","csv-export","image-paste-drop"]
+  }
 }

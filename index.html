@@ -4,36 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>◊ fallnote · the Notion killer · sovereign single-HTML block editor</title>
-<meta name="description" content="fallnote — sovereign block-based note + database substrate. Pages, nested pages, databases with table view, slash commands, wiki links, backlinks, markdown shortcuts. Single HTML PWA, IndexedDB primary, MIT. The Notion killer.">
+<meta name="description" content="fallnote v2 — sovereign block-based note + database substrate with board, calendar, table views, slash menu, wiki links, toggle blocks, image blocks, drag-drop, trash, favourites, page covers. Single HTML PWA, IndexedDB primary, MIT.">
 <meta name="prime" content="1283">
 <meta name="category" content="behaviour">
-<link rel="manifest" href='data:application/manifest+json,{"name":"fallnote","short_name":"fallnote","start_url":".","display":"standalone","background_color":"%230b0a0f","theme_color":"%23b8974a","description":"Sovereign block-based note + database substrate · Notion killer","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27><rect width=%2764%27 height=%2764%27 fill=%27%230b0a0f%27/><text x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%23b8974a%27 font-family=%27serif%27 font-weight=%27bold%27>◊</text></svg>","sizes":"any","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"fallnote","short_name":"fallnote","start_url":".","display":"standalone","background_color":"%230b0a0f","theme_color":"%23b8974a","description":"Sovereign block + database substrate · Notion killer","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27><rect width=%2764%27 height=%2764%27 fill=%27%230b0a0f%27/><text x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%23b8974a%27 font-family=%27serif%27 font-weight=%27bold%27>◊</text></svg>","sizes":"any","type":"image/svg+xml"}]}'>
 <style>
 :root {
   --void:#0b0a0f; --void-2:#13121a; --ink:#1a1922; --ink-hover:#22212c;
   --line:#2a2934; --line-soft:#1f1e28;
   --cream:#e6e1d6; --cream-dim:#a8a395; --cream-muted:#6e6a5e;
   --brass:#b8974a; --amber:#ff8c00; --ox:#8b1a1a;
-  --green:#4ade80; --red:#ef4444; --blue:#60a5fa; --yellow:#fbbf24; --violet:#a855f7;
+  --green:#4ade80; --red:#ef4444; --blue:#60a5fa; --yellow:#fbbf24; --violet:#a855f7; --pink:#ec4899; --teal:#14b8a6;
   --serif: Georgia, 'Libre Baskerville', ui-serif, serif;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'IBM Plex Mono', 'SF Mono', ui-monospace, Menlo, monospace;
   --sidebar-w: 260px;
 }
+html.light {
+  --void:#fefdf7; --void-2:#f7f4e9; --ink:#eee9d8; --ink-hover:#e4ddc6;
+  --line:#d8cfb2; --line-soft:#e6dfc6;
+  --cream:#1a1815; --cream-dim:#42403a; --cream-muted:#7a766c;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   background: var(--void); color: var(--cream); font: 14.5px/1.6 var(--sans);
-  min-height: 100dvh; -webkit-font-smoothing: antialiased;
-  overflow: hidden;
+  min-height: 100dvh; -webkit-font-smoothing: antialiased; overflow: hidden;
 }
 button { font-family: inherit; cursor: pointer; background: transparent; border: none; color: inherit; }
 input, textarea, select {
   font-family: inherit; background: var(--ink); border: 1px solid var(--line);
   color: var(--cream); border-radius: 3px; padding: 7px 10px; outline: none; font-size: 13px;
 }
-input:focus, textarea:focus { border-color: var(--brass); }
+input:focus, textarea:focus, select:focus { border-color: var(--brass); }
 a { color: var(--brass); text-decoration: none; }
 a:hover { text-decoration: underline; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brass); }
 
 /* ─── App layout ─── */
 .app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 100dvh; }
@@ -45,7 +53,7 @@ aside.sidebar {
   display: flex; flex-direction: column; overflow: hidden;
 }
 aside.sidebar .brand {
-  display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 10px; padding: 12px 18px;
   border-bottom: 1px solid var(--line); user-select: none;
 }
 aside.sidebar .brand .mark {
@@ -53,27 +61,25 @@ aside.sidebar .brand .mark {
   border-radius: 5px; display: grid; place-items: center;
   font-family: var(--serif); font-weight: 700; font-size: 16px; color: var(--void);
 }
-aside.sidebar .brand .name {
-  font-family: var(--serif); font-weight: 700; font-size: 15px;
-}
-aside.sidebar .brand .v {
-  margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--cream-muted);
-  letter-spacing: .12em; text-transform: uppercase;
-}
+aside.sidebar .brand .name { font-family: var(--serif); font-weight: 700; font-size: 15px; }
+aside.sidebar .brand .v { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; }
 aside.sidebar .actions {
-  padding: 10px 12px; display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 8px 10px; display: flex; gap: 5px; flex-wrap: wrap;
   border-bottom: 1px solid var(--line-soft);
 }
 aside.sidebar .actions button {
-  padding: 6px 10px; background: var(--ink); border: 1px solid var(--line);
-  border-radius: 3px; font-size: 12px; color: var(--cream-dim); flex: 1; min-width: 0;
+  padding: 6px 9px; background: var(--ink); border: 1px solid var(--line);
+  border-radius: 3px; font-size: 11px; color: var(--cream-dim); flex: 1; min-width: 0;
 }
 aside.sidebar .actions button:hover { background: var(--ink-hover); color: var(--cream); border-color: var(--brass); }
-aside.sidebar .search-wrap { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); }
+aside.sidebar .search-wrap { padding: 8px 10px; border-bottom: 1px solid var(--line-soft); }
 aside.sidebar .search-wrap input { width: 100%; font-size: 12px; padding: 6px 9px; }
-
+aside.sidebar .nav-section {
+  padding: 6px 14px; font-family: var(--mono); font-size: 9px; color: var(--cream-muted);
+  letter-spacing: .12em; text-transform: uppercase; margin-top: 8px;
+}
 aside.sidebar nav.tree {
-  flex: 1; overflow-y: auto; padding: 8px 6px 24px;
+  flex: 1; overflow-y: auto; padding: 0 6px 24px;
 }
 aside.sidebar nav.tree .empty {
   padding: 18px 14px; color: var(--cream-muted); font-size: 12px; text-align: center;
@@ -93,25 +99,26 @@ aside.sidebar nav.tree .empty {
 .tree-node .twirl.open { transform: rotate(90deg); }
 .tree-node .icon { flex-shrink: 0; font-size: 13px; }
 .tree-node .title { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.tree-node .row-add {
-  opacity: 0; flex-shrink: 0; padding: 2px 6px; font-size: 14px; color: var(--cream-muted);
+.tree-node .row-add, .tree-node .row-star {
+  opacity: 0; flex-shrink: 0; padding: 2px 5px; font-size: 13px; color: var(--cream-muted);
   border-radius: 2px;
 }
-.tree-node:hover .row-add { opacity: 1; }
+.tree-node:hover .row-add, .tree-node:hover .row-star { opacity: 1; }
+.tree-node .row-star.starred { opacity: 1; color: var(--brass); }
 .tree-node .row-add:hover { background: var(--brass); color: var(--void); }
+.tree-node .row-star:hover { color: var(--brass); }
 .tree-children { padding-left: 14px; }
 
 aside.sidebar footer {
-  padding: 10px 12px; border-top: 1px solid var(--line-soft); display: flex; gap: 4px;
+  padding: 8px 10px; border-top: 1px solid var(--line-soft); display: flex; gap: 4px;
   font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .04em;
 }
-aside.sidebar footer button { padding: 5px 8px; border-radius: 2px; }
+aside.sidebar footer button { padding: 5px 7px; border-radius: 2px; flex-shrink: 0; }
 aside.sidebar footer button:hover { background: var(--ink); color: var(--brass); }
 
 /* ─── Main content ─── */
-main.content {
-  overflow-y: auto; padding: 36px clamp(40px, 8vw, 120px) 200px;
-}
+main.content { overflow-y: auto; padding: 0 0 200px; position: relative; }
+main.content .page-wrap { max-width: 880px; margin: 0 auto; padding: 0 clamp(20px, 6vw, 100px); }
 main.content .empty-page {
   max-width: 720px; margin: 80px auto; text-align: center; color: var(--cream-muted);
 }
@@ -123,13 +130,35 @@ main.content .empty-page button {
 }
 main.content .empty-page button:hover { background: var(--amber); }
 
-.page-wrap { max-width: 780px; margin: 0 auto; }
-.page-header { margin-bottom: 22px; }
-.page-icon-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
-.page-icon {
-  font-size: 42px; line-height: 1; padding: 4px 8px; border-radius: 4px; cursor: pointer;
-  user-select: none;
+/* Page cover */
+.page-cover {
+  height: 180px; background-size: cover; background-position: center; position: relative; cursor: pointer;
+  background-color: var(--ink);
 }
+.page-cover.empty { height: 24px; background: linear-gradient(180deg, var(--void-2), var(--void)); cursor: default; }
+.page-cover .cover-actions { position: absolute; right: 16px; bottom: 12px; display: none; gap: 6px; }
+.page-cover:hover .cover-actions { display: flex; }
+.page-cover .cover-actions button { padding: 5px 11px; font-size: 11px; background: rgba(0,0,0,.55); color: var(--cream); border-radius: 3px; backdrop-filter: blur(4px); }
+.add-cover-btn { display: inline-block; font-size: 12px; color: var(--cream-muted); padding: 6px 0; cursor: pointer; }
+.add-cover-btn:hover { color: var(--brass); }
+
+.page-header { padding: 22px 0 18px; }
+.page-meta {
+  display: flex; align-items: center; gap: 12px; padding: 6px 0;
+  font-family: var(--mono); font-size: 11px; color: var(--cream-muted); letter-spacing: .04em;
+  flex-wrap: wrap;
+}
+.page-meta .crumb a { color: var(--cream-muted); }
+.page-meta .crumb a:hover { color: var(--brass); }
+.page-meta .crumb .sep { margin: 0 4px; color: var(--line); }
+.page-meta .action-btn {
+  padding: 3px 9px; border: 1px solid var(--line); border-radius: 3px;
+  background: var(--ink); color: var(--cream-dim); font-size: 10px;
+}
+.page-meta .action-btn:hover { border-color: var(--brass); color: var(--brass); }
+.page-meta .action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.page-icon-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; margin-top: 8px; }
+.page-icon { font-size: 42px; line-height: 1; padding: 4px 8px; border-radius: 4px; cursor: pointer; user-select: none; }
 .page-icon:hover { background: var(--ink); }
 .page-title {
   font-family: var(--serif); font-weight: 700; font-size: 38px; line-height: 1.15;
@@ -137,65 +166,54 @@ main.content .empty-page button:hover { background: var(--amber); }
   width: 100%; padding: 4px 0; letter-spacing: -.01em;
 }
 .page-title:empty:before { content: attr(data-placeholder); color: var(--cream-muted); }
-.page-meta {
-  display: flex; align-items: center; gap: 14px; padding: 6px 0;
-  font-family: var(--mono); font-size: 11px; color: var(--cream-muted); letter-spacing: .04em;
-}
-.page-meta .crumb a { color: var(--cream-muted); }
-.page-meta .crumb a:hover { color: var(--brass); }
-.page-meta .crumb .sep { margin: 0 4px; color: var(--line); }
-.page-meta .action-btn {
-  padding: 3px 8px; border: 1px solid var(--line); border-radius: 3px;
-  background: var(--ink); color: var(--cream-dim); font-size: 10px;
-}
-.page-meta .action-btn:hover { border-color: var(--brass); color: var(--brass); }
 
 /* ─── Blocks ─── */
 .block-list { padding: 4px 0; }
 .block {
-  position: relative; padding: 2px 0 2px 28px; min-height: 28px;
+  position: relative; padding: 2px 0 2px 32px; min-height: 28px;
   display: flex; align-items: flex-start; gap: 4px;
 }
+.block.drag-over-top { box-shadow: 0 -2px 0 0 var(--brass) inset; }
+.block.drag-over-bot { box-shadow: 0 -2px 0 0 var(--brass); }
+.block.is-dragging { opacity: .35; }
 .block:hover .block-handle { opacity: .8; }
 .block-handle {
-  position: absolute; left: -2px; top: 3px; opacity: 0;
+  position: absolute; left: 0; top: 3px; opacity: 0; user-select: none;
   display: flex; gap: 1px; transition: opacity .14s;
 }
 .block-handle button {
   width: 18px; height: 22px; padding: 0; display: grid; place-items: center;
-  color: var(--cream-muted); font-size: 14px; border-radius: 2px;
+  color: var(--cream-muted); font-size: 13px; border-radius: 2px;
 }
 .block-handle button:hover { background: var(--ink); color: var(--brass); }
+.block-handle .grip { cursor: grab; font-size: 14px; }
+.block-handle .grip:active { cursor: grabbing; }
 .block-content {
   flex: 1; outline: none; min-height: 24px; padding: 2px 0;
   font-size: 15px; line-height: 1.55; word-wrap: break-word;
 }
-.block-content:empty:before {
-  content: attr(data-placeholder); color: var(--cream-muted); pointer-events: none;
-}
-.block-content.is-empty:before {
+.block-content:empty:before, .block-content.is-empty:before {
   content: attr(data-placeholder); color: var(--cream-muted); pointer-events: none;
 }
 .block[data-type="h1"] .block-content { font-family: var(--serif); font-size: 28px; font-weight: 700; line-height: 1.2; padding: 14px 0 6px; }
 .block[data-type="h2"] .block-content { font-family: var(--serif); font-size: 22px; font-weight: 700; line-height: 1.25; padding: 10px 0 4px; }
 .block[data-type="h3"] .block-content { font-family: var(--serif); font-size: 17px; font-weight: 700; line-height: 1.3; padding: 8px 0 4px; color: var(--cream); }
-.block[data-type="bullet"] { padding-left: 50px; }
-.block[data-type="bullet"]:before { content: "•"; position: absolute; left: 32px; top: 4px; color: var(--cream-dim); font-size: 16px; }
-.block[data-type="numbered"] { padding-left: 50px; }
+.block[data-type="bullet"] { padding-left: 54px; }
+.block[data-type="bullet"]:before { content: "•"; position: absolute; left: 36px; top: 4px; color: var(--cream-dim); font-size: 16px; }
+.block[data-type="numbered"] { padding-left: 54px; }
 .block[data-type="numbered"]:before { content: attr(data-n) "."; position: absolute; left: 32px; top: 4px; color: var(--cream-dim); font-size: 13px; font-family: var(--mono); }
-.block[data-type="todo"] { padding-left: 50px; }
+.block[data-type="todo"] { padding-left: 54px; }
 .block[data-type="todo"] .todo-check {
-  position: absolute; left: 30px; top: 6px; width: 16px; height: 16px;
+  position: absolute; left: 34px; top: 6px; width: 16px; height: 16px;
   border: 1.5px solid var(--cream-muted); border-radius: 3px; cursor: pointer;
   display: grid; place-items: center; font-size: 11px; color: var(--void);
   background: var(--void); flex-shrink: 0;
 }
 .block[data-type="todo"][data-checked="true"] .todo-check { background: var(--brass); border-color: var(--brass); color: var(--void); }
 .block[data-type="todo"][data-checked="true"] .block-content { color: var(--cream-muted); text-decoration: line-through; }
-.block[data-type="quote"] { padding-left: 36px; }
-.block[data-type="quote"]:before { content: ""; position: absolute; left: 28px; top: 6px; bottom: 6px; width: 3px; background: var(--brass); }
+.block[data-type="quote"] { padding-left: 40px; }
+.block[data-type="quote"]:before { content: ""; position: absolute; left: 32px; top: 6px; bottom: 6px; width: 3px; background: var(--brass); }
 .block[data-type="quote"] .block-content { font-style: italic; color: var(--cream-dim); }
-.block[data-type="callout"] { padding-left: 28px; }
 .block[data-type="callout"] .block-content {
   background: var(--ink); border-left: 3px solid var(--brass); border-radius: 3px;
   padding: 10px 14px; font-size: 14px;
@@ -205,9 +223,9 @@ main.content .empty-page button:hover { background: var(--amber); }
   padding: 12px 14px; border-radius: 4px; border: 1px solid var(--line);
   white-space: pre-wrap; tab-size: 2;
 }
-.block[data-type="divider"] { padding: 12px 28px; }
+.block[data-type="divider"] { padding: 12px 32px; min-height: auto; }
 .block[data-type="divider"] .block-content { display: none; }
-.block[data-type="divider"]:before { content: ""; display: block; height: 1px; background: var(--line); }
+.block[data-type="divider"]:before { content: ""; display: block; height: 1px; background: var(--line); width: 100%; }
 .block[data-type="link-to-page"] .block-content {
   display: flex; align-items: center; gap: 8px; padding: 6px 10px;
   background: var(--ink); border-radius: 3px; cursor: pointer; color: var(--brass);
@@ -215,22 +233,57 @@ main.content .empty-page button:hover { background: var(--amber); }
 }
 .block[data-type="link-to-page"] .block-content:hover { background: var(--ink-hover); border-color: var(--brass); }
 .block[data-type="link-to-page"] .block-content:before { content: "↪"; font-family: var(--mono); }
+.block[data-type="toggle"] { padding-left: 48px; }
+.block[data-type="toggle"] .toggle-arrow {
+  position: absolute; left: 30px; top: 6px; width: 18px; height: 18px;
+  display: grid; place-items: center; font-size: 10px; color: var(--cream-dim); cursor: pointer;
+  user-select: none; transition: transform .15s;
+}
+.block[data-type="toggle"][data-open="true"] .toggle-arrow { transform: rotate(90deg); }
+.toggle-children {
+  margin-left: 22px; padding-left: 4px; border-left: 1px solid var(--line-soft);
+  margin-top: 2px;
+}
+.block[data-type="toggle"][data-open="false"] + .toggle-children { display: none; }
+.block[data-type="image"] { padding-left: 32px; }
+.block[data-type="image"] .block-content {
+  padding: 0; max-width: 100%; overflow: hidden;
+}
+.block[data-type="image"] img { max-width: 100%; max-height: 600px; border-radius: 4px; display: block; }
+.block[data-type="image"] .img-placeholder {
+  border: 2px dashed var(--line); border-radius: 4px; padding: 40px;
+  text-align: center; color: var(--cream-muted); cursor: pointer; background: var(--ink);
+}
+.block[data-type="image"] .img-placeholder:hover { border-color: var(--brass); color: var(--brass); }
 .block strong { color: var(--brass); font-weight: 600; }
 .block em { font-style: italic; }
 .block code { font-family: var(--mono); background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 2px; font-size: 12.5px; color: var(--brass); }
 .block s, .block del { color: var(--cream-muted); }
 .block a { color: var(--brass); text-decoration: underline; text-underline-offset: 2px; }
-.wiki-link {
-  color: var(--brass); border-bottom: 1px dashed var(--brass); cursor: pointer; padding: 0 1px;
-}
+.wiki-link { color: var(--brass); border-bottom: 1px dashed var(--brass); cursor: pointer; padding: 0 1px; }
 .wiki-link.broken { color: var(--ox); border-color: var(--ox); }
 
-/* ─── Database / table ─── */
+/* ─── Database ─── */
 .db-wrap { margin: 12px 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-.db-toolbar { padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; background: var(--void-2); flex-wrap: wrap; }
-.db-toolbar button { padding: 4px 10px; border: 1px solid var(--line); background: var(--ink); border-radius: 3px; font-size: 11px; color: var(--cream-dim); font-family: var(--mono); letter-spacing: .04em; }
-.db-toolbar button:hover { border-color: var(--brass); color: var(--brass); }
-.db-toolbar .count { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .08em; text-transform: uppercase; margin-left: auto; }
+.db-toolbar {
+  padding: 8px 12px; border-bottom: 1px solid var(--line);
+  display: flex; gap: 8px; align-items: center; background: var(--void-2); flex-wrap: wrap;
+}
+.db-toolbar .view-tab {
+  padding: 4px 10px; border: 1px solid var(--line); background: transparent; border-radius: 3px;
+  font-size: 11px; color: var(--cream-dim); font-family: var(--mono); letter-spacing: .04em;
+}
+.db-toolbar .view-tab:hover { border-color: var(--brass); color: var(--brass); }
+.db-toolbar .view-tab.active { background: var(--brass); color: var(--void); border-color: var(--brass); font-weight: 600; }
+.db-toolbar button.tool-btn {
+  padding: 4px 10px; border: 1px solid var(--line); background: var(--ink); border-radius: 3px;
+  font-size: 11px; color: var(--cream-dim); font-family: var(--mono); letter-spacing: .04em;
+}
+.db-toolbar button.tool-btn:hover { border-color: var(--brass); color: var(--brass); }
+.db-toolbar .count {
+  font-family: var(--mono); font-size: 10px; color: var(--cream-muted);
+  letter-spacing: .08em; text-transform: uppercase; margin-left: auto;
+}
 .db-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .db-table th {
   background: var(--void-2); padding: 7px 11px; text-align: left;
@@ -241,6 +294,7 @@ main.content .empty-page button:hover { background: var(--amber); }
 }
 .db-table th:hover { background: var(--ink); color: var(--cream-dim); }
 .db-table th .prop-type { color: var(--violet); font-size: 9px; margin-left: 4px; }
+.db-table th .sort-mark { color: var(--brass); margin-left: 4px; font-family: var(--mono); }
 .db-table th.add-prop { color: var(--cream-muted); cursor: pointer; }
 .db-table th.add-prop:hover { color: var(--brass); }
 .db-table td {
@@ -260,23 +314,73 @@ main.content .empty-page button:hover { background: var(--amber); }
 .db-table td .cell-edit:focus { background: rgba(184,151,74,.06); }
 .db-table .add-row-row td { padding: 6px 10px; color: var(--cream-muted); cursor: pointer; }
 .db-table .add-row-row:hover td { color: var(--brass); background: var(--ink); }
-.db-table .tag {
+.tag {
   display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 11px;
   margin: 1px 2px 1px 0; background: var(--ink); border: 1px solid var(--line);
 }
-.db-table .tag[data-color="green"] { background: rgba(74,222,128,.16); color: var(--green); border-color: var(--green); }
-.db-table .tag[data-color="amber"] { background: rgba(255,140,0,.16); color: var(--amber); border-color: var(--amber); }
-.db-table .tag[data-color="red"] { background: rgba(239,68,68,.16); color: var(--red); border-color: var(--red); }
-.db-table .tag[data-color="blue"] { background: rgba(96,165,250,.16); color: var(--blue); border-color: var(--blue); }
-.db-table .tag[data-color="violet"] { background: rgba(168,85,247,.16); color: var(--violet); border-color: var(--violet); }
-.db-table .checkbox-cell { font-size: 16px; color: var(--cream-muted); cursor: pointer; user-select: none; }
-.db-table .checkbox-cell.checked { color: var(--brass); }
+.tag[data-color="green"] { background: rgba(74,222,128,.16); color: var(--green); border-color: var(--green); }
+.tag[data-color="amber"] { background: rgba(255,140,0,.16); color: var(--amber); border-color: var(--amber); }
+.tag[data-color="red"] { background: rgba(239,68,68,.16); color: var(--red); border-color: var(--red); }
+.tag[data-color="blue"] { background: rgba(96,165,250,.16); color: var(--blue); border-color: var(--blue); }
+.tag[data-color="violet"] { background: rgba(168,85,247,.16); color: var(--violet); border-color: var(--violet); }
+.tag[data-color="pink"] { background: rgba(236,72,153,.16); color: var(--pink); border-color: var(--pink); }
+.tag[data-color="teal"] { background: rgba(20,184,166,.16); color: var(--teal); border-color: var(--teal); }
+.checkbox-cell { font-size: 16px; color: var(--cream-muted); cursor: pointer; user-select: none; }
+.checkbox-cell.checked { color: var(--brass); }
 
-/* ─── Backlinks ─── */
-.backlinks {
-  margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
-  font-size: 13px;
+/* Board view */
+.db-board {
+  display: flex; gap: 12px; padding: 14px; overflow-x: auto; align-items: flex-start; min-height: 320px;
 }
+.board-col {
+  flex: 0 0 280px; background: var(--void-2); border: 1px solid var(--line);
+  border-radius: 4px; display: flex; flex-direction: column; max-height: 70vh;
+}
+.board-col .board-head {
+  padding: 9px 12px; border-bottom: 1px solid var(--line-soft); display: flex;
+  align-items: center; gap: 8px; user-select: none;
+}
+.board-col .board-head .ttl { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--cream); }
+.board-col .board-head .count { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); }
+.board-col .board-head .add { margin-left: auto; padding: 2px 8px; color: var(--cream-muted); font-size: 14px; cursor: pointer; border-radius: 2px; }
+.board-col .board-head .add:hover { color: var(--brass); background: var(--ink); }
+.board-col .board-list { padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 30px; }
+.board-card {
+  background: var(--ink); border: 1px solid var(--line); border-radius: 3px;
+  padding: 8px 11px; cursor: pointer; transition: border-color .12s;
+}
+.board-card:hover { border-color: var(--brass); }
+.board-card.is-dragging { opacity: .35; }
+.board-card .bc-title { font-size: 13px; color: var(--cream); font-weight: 500; margin-bottom: 4px; }
+.board-card .bc-meta { display: flex; flex-wrap: wrap; gap: 3px; font-size: 11px; }
+.board-col.drag-over { background: rgba(184,151,74,.06); border-color: var(--brass); }
+
+/* Calendar view */
+.db-cal { padding: 12px; }
+.cal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-family: var(--mono); font-size: 12px; }
+.cal-head button { padding: 4px 10px; border: 1px solid var(--line); background: var(--ink); border-radius: 3px; color: var(--cream-dim); }
+.cal-head button:hover { border-color: var(--brass); color: var(--brass); }
+.cal-head .month-label { font-weight: 600; color: var(--cream); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.cal-day-hdr { background: var(--void-2); padding: 6px 8px; font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .08em; text-transform: uppercase; text-align: center; }
+.cal-day {
+  background: var(--ink); padding: 4px 6px; min-height: 88px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.cal-day:hover { background: var(--ink-hover); }
+.cal-day.other-month { opacity: .35; }
+.cal-day.today { background: rgba(184,151,74,.10); }
+.cal-day .cal-num { font-family: var(--mono); font-size: 11px; color: var(--cream-dim); }
+.cal-day.today .cal-num { color: var(--brass); font-weight: 700; }
+.cal-event {
+  background: var(--brass); color: var(--void); padding: 1px 5px; border-radius: 2px;
+  font-size: 10.5px; line-height: 1.3; cursor: pointer; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-event:hover { background: var(--amber); }
+
+/* Backlinks */
+.backlinks { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; }
 .backlinks h4 { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
 .backlinks .bl-item { padding: 8px 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 6px; cursor: pointer; }
 .backlinks .bl-item:hover { border-color: var(--brass); }
@@ -284,11 +388,11 @@ main.content .empty-page button:hover { background: var(--amber); }
 .backlinks .bl-item .ctx { color: var(--cream-dim); font-size: 12.5px; line-height: 1.5; }
 .backlinks .bl-item .ctx mark { background: rgba(184,151,74,.22); color: var(--brass); padding: 0 3px; border-radius: 2px; }
 
-/* ─── Slash menu / wiki autocomplete / command palette ─── */
+/* Popups */
 .popup {
   position: fixed; z-index: 1000; background: var(--void-2); border: 1px solid var(--brass);
   border-radius: 4px; box-shadow: 0 8px 30px rgba(0,0,0,.6); padding: 4px;
-  max-height: 320px; overflow-y: auto; min-width: 240px; font-size: 13px;
+  max-height: 360px; overflow-y: auto; min-width: 240px; font-size: 13px;
 }
 .popup .pop-item {
   display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 3px;
@@ -298,11 +402,9 @@ main.content .empty-page button:hover { background: var(--amber); }
 .popup .pop-item .icon { width: 22px; text-align: center; font-size: 15px; color: var(--brass); flex-shrink: 0; }
 .popup .pop-item .label { flex: 1; }
 .popup .pop-item .hint { font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .04em; }
-.popup .pop-section {
-  font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .12em;
-  text-transform: uppercase; padding: 8px 10px 4px;
-}
+.popup .pop-section { font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; padding: 8px 10px 4px; }
 
+/* Modal */
 .modal-bg {
   position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; z-index: 1100;
   align-items: flex-start; justify-content: center; padding: 80px 20px; overflow-y: auto;
@@ -315,7 +417,7 @@ main.content .empty-page button:hover { background: var(--amber); }
 .modal h3 { font-family: var(--serif); font-size: 17px; margin-bottom: 14px; color: var(--brass); }
 .modal .close { position: absolute; top: 10px; right: 12px; color: var(--cream-muted); font-size: 22px; cursor: pointer; line-height: 1; }
 .modal .close:hover { color: var(--cream); }
-.modal .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.modal .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
 .modal label { font-size: 12px; color: var(--cream-dim); min-width: 90px; }
 .modal input[type=text], .modal select, .modal textarea { flex: 1; padding: 7px 10px; }
 .modal .row-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
@@ -335,40 +437,37 @@ main.content .empty-page button:hover { background: var(--amber); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { background: var(--red); color: #fff; }
 
-/* command palette */
 .cmd-modal { padding: 0; max-width: 540px; }
 .cmd-modal input { width: 100%; padding: 14px 18px; font-size: 15px; border: none; background: transparent; border-bottom: 1px solid var(--line); border-radius: 0; }
-.cmd-modal .cmd-results { max-height: 360px; overflow-y: auto; padding: 6px; }
+.cmd-modal .cmd-results { max-height: 420px; overflow-y: auto; padding: 6px; }
 .cmd-modal .cmd-item { padding: 8px 12px; border-radius: 3px; cursor: pointer; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--cream-dim); }
 .cmd-modal .cmd-item:hover, .cmd-modal .cmd-item.active { background: var(--ink); color: var(--cream); }
 .cmd-modal .cmd-item .lbl { flex: 1; }
-.cmd-modal .cmd-item .kbd { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); padding: 1px 6px; border: 1px solid var(--line); border-radius: 2px; }
 .cmd-modal .cmd-item .ctx { font-size: 11px; color: var(--cream-muted); }
 
-/* sidebar toggle */
 .sidebar-toggle {
-  position: fixed; top: 12px; left: 12px; z-index: 200; padding: 6px 10px;
+  position: fixed; top: 10px; left: 10px; z-index: 200; padding: 6px 10px;
   background: var(--ink); border: 1px solid var(--line); border-radius: 3px;
   color: var(--cream-dim); font-size: 14px; display: none;
 }
 .app.no-sidebar .sidebar-toggle { display: block; }
 .sidebar-toggle:hover { color: var(--brass); border-color: var(--brass); }
 
-/* sovereignty strip */
 .sov {
   position: fixed; bottom: 8px; right: 10px; font-family: var(--mono); font-size: 9px;
   color: var(--cream-muted); letter-spacing: .08em; padding: 3px 8px;
   background: rgba(0,0,0,.6); border-radius: 2px; pointer-events: none;
 }
 
-/* mobile */
 @media (max-width: 720px) {
   .app { grid-template-columns: 0 1fr; }
   aside.sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 80vw; max-width: 320px; z-index: 300; transform: translateX(-100%); transition: transform .2s; }
   .app.mobile-sidebar-open aside.sidebar { transform: translateX(0); }
   .sidebar-toggle { display: block; }
-  main.content { padding: 60px 18px 200px; }
+  main.content .page-wrap { padding: 0 18px; }
   .page-title { font-size: 26px; }
+  .db-board { padding: 6px; }
+  .board-col { flex: 0 0 240px; }
 }
 </style>
 </head>
@@ -379,21 +478,23 @@ main.content .empty-page button:hover { background: var(--amber); }
     <div class="brand">
       <div class="mark">◊</div>
       <div class="name">fallnote</div>
-      <div class="v">v1.0</div>
+      <div class="v">v2.0</div>
     </div>
     <div class="actions">
-      <button onclick="newPage()" title="New page (top-level)">+ Page</button>
-      <button onclick="newDatabase()" title="New database">+ Database</button>
+      <button onclick="newPage()" title="New page">+ Page</button>
+      <button onclick="newDatabase()" title="New database">+ DB</button>
+      <button onclick="openCommandPalette()" title="Cmd-K">⌘K</button>
+      <button onclick="toggleTheme()" title="Toggle light/dark">☾</button>
     </div>
     <div class="search-wrap">
       <input type="text" id="sidebarSearch" placeholder="Search…" oninput="onSidebarSearch(this.value)">
     </div>
     <nav class="tree" id="pageTree"></nav>
     <footer>
-      <button onclick="openExport()" title="Export workspace">⤓ Export</button>
+      <button onclick="openTrash()" title="Trash">🗑 Trash</button>
+      <button onclick="openExport()" title="Export">⤓ Export</button>
       <button onclick="openImport()" title="Import">⤒ Import</button>
       <button onclick="openSettings()" title="Settings">⚙</button>
-      <button onclick="openCommandPalette()" title="Command palette (Ctrl/Cmd-K)">⌘K</button>
     </footer>
   </aside>
 
@@ -405,7 +506,10 @@ main.content .empty-page button:hover { background: var(--amber); }
 
 <div class="toast" id="toast"></div>
 <div class="modal-bg" id="modalBg"></div>
-<div class="sov">◊ fallnote · sovereign · MIT · IndexedDB local</div>
+<input type="file" id="hiddenFileInput" accept="image/*" style="display:none">
+<input type="file" id="hiddenFileInputMd" accept=".md,.markdown,text/markdown" multiple style="display:none">
+<input type="file" id="hiddenFileInputJson" accept=".json,application/json" style="display:none">
+<div class="sov">◊ fallnote v2 · sovereign · MIT · IndexedDB local</div>
 
 <script>
 'use strict';
@@ -414,7 +518,7 @@ main.content .empty-page button:hover { background: var(--amber); }
 // CONST
 // ════════════════════════════════════════════════════════════════
 const DB_NAME = 'fallnote_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const BLOCK_TYPES = [
   { type: 'paragraph', label: 'Text', icon: '¶', hint: 'plain paragraph' },
   { type: 'h1',        label: 'Heading 1', icon: 'H₁', hint: 'big heading' },
@@ -423,9 +527,11 @@ const BLOCK_TYPES = [
   { type: 'bullet',    label: 'Bullet list', icon: '•', hint: '- item' },
   { type: 'numbered',  label: 'Numbered list', icon: '1.', hint: '1. item' },
   { type: 'todo',      label: 'To-do', icon: '☐', hint: '[ ] task' },
+  { type: 'toggle',    label: 'Toggle', icon: '▸', hint: 'collapsible' },
   { type: 'quote',     label: 'Quote', icon: '❝', hint: 'blockquote' },
   { type: 'callout',   label: 'Callout', icon: '◊', hint: 'highlighted box' },
   { type: 'code',      label: 'Code', icon: '</>', hint: 'code block' },
+  { type: 'image',     label: 'Image', icon: '🖼', hint: 'paste, drag, or pick' },
   { type: 'divider',   label: 'Divider', icon: '—', hint: 'horizontal rule' },
   { type: 'link-to-page', label: 'Link to page', icon: '↪', hint: 'reference' },
 ];
@@ -437,10 +543,12 @@ const PROP_TYPES = [
   { type: 'multi-select', label: 'Multi-select' },
   { type: 'checkbox', label: 'Checkbox' },
 ];
-const COLORS = ['green','amber','red','blue','violet'];
+const COLORS = ['green','amber','red','blue','violet','pink','teal'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 // ════════════════════════════════════════════════════════════════
-// IndexedDB layer
+// IndexedDB
 // ════════════════════════════════════════════════════════════════
 let db = null;
 function openDB() {
@@ -457,9 +565,7 @@ function openDB() {
         const s = d.createObjectStore('blocks', { keyPath: 'id' });
         s.createIndex('page', 'page_id', { unique: false });
       }
-      if (!d.objectStoreNames.contains('meta')) {
-        d.createObjectStore('meta', { keyPath: 'key' });
-      }
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
     };
     req.onsuccess = () => { db = req.result; resolve(db); };
   });
@@ -468,36 +574,25 @@ function tx(stores, mode='readonly') { return db.transaction(stores, mode); }
 function dbGet(store, key) {
   return new Promise((resolve, reject) => {
     const r = tx([store]).objectStore(store).get(key);
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
+    r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error);
   });
 }
 function dbGetAll(store) {
   return new Promise((resolve, reject) => {
     const r = tx([store]).objectStore(store).getAll();
-    r.onsuccess = () => resolve(r.result || []);
-    r.onerror = () => reject(r.error);
+    r.onsuccess = () => resolve(r.result || []); r.onerror = () => reject(r.error);
   });
 }
 function dbPut(store, value) {
   return new Promise((resolve, reject) => {
     const r = tx([store], 'readwrite').objectStore(store).put(value);
-    r.onsuccess = () => resolve(value);
-    r.onerror = () => reject(r.error);
+    r.onsuccess = () => resolve(value); r.onerror = () => reject(r.error);
   });
 }
 function dbDel(store, key) {
   return new Promise((resolve, reject) => {
     const r = tx([store], 'readwrite').objectStore(store).delete(key);
-    r.onsuccess = () => resolve();
-    r.onerror = () => reject(r.error);
-  });
-}
-function dbIndexQuery(store, index, value) {
-  return new Promise((resolve, reject) => {
-    const r = tx([store]).objectStore(store).index(index).getAll(value);
-    r.onsuccess = () => resolve(r.result || []);
-    r.onerror = () => reject(r.error);
+    r.onsuccess = () => resolve(); r.onerror = () => reject(r.error);
   });
 }
 
@@ -505,12 +600,15 @@ function dbIndexQuery(store, index, value) {
 // State
 // ════════════════════════════════════════════════════════════════
 const state = {
-  pages: new Map(),       // id -> page
-  blocks: new Map(),      // id -> block
+  pages: new Map(), blocks: new Map(),
   currentPageId: null,
   treeExpanded: new Set(),
-  filteredTree: null,     // null = show full tree; array of page ids = filtered
-  saving: false,
+  toggleOpen: new Set(),       // block ids that are open
+  filteredTree: null,
+  favourites: [],
+  recent: [],
+  theme: 'dark',
+  dbView: new Map(),           // dbId -> { kind: 'table'|'board'|'calendar', groupBy?, filterBy?, sortBy?, sortDir?, calMonth? }
   saveTimer: null,
 };
 
@@ -520,10 +618,12 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('show'); clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 2400); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return iso; return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function ymd(d) { return d.toISOString().slice(0,10); }
+function parseDate(s) { if (!s) return null; const d = new Date(s); return isNaN(d) ? null : d; }
 
 // ════════════════════════════════════════════════════════════════
-// Page + block model
+// Models
 // ════════════════════════════════════════════════════════════════
 function makePage(opts = {}) {
   return {
@@ -531,9 +631,13 @@ function makePage(opts = {}) {
     parent_page_id: opts.parent_page_id || null,
     title: opts.title || '',
     icon: opts.icon || '📄',
+    cover: opts.cover || null,
     is_database: !!opts.is_database,
+    is_row: !!opts.is_row,
     schema: opts.schema || null,
+    properties: opts.properties || null,
     position: opts.position || 0,
+    deleted_at: null,
     created_at: now(), updated_at: now(),
   };
 }
@@ -541,11 +645,14 @@ function makeBlock(opts = {}) {
   return {
     id: uid('b_'),
     page_id: opts.page_id,
+    parent_block_id: opts.parent_block_id || null,
     type: opts.type || 'paragraph',
     content: opts.content || '',
     checked: opts.checked || false,
     page_link_id: opts.page_link_id || null,
+    image_data: opts.image_data || null,
     position: opts.position || 0,
+    deleted_at: null,
     created_at: now(), updated_at: now(),
   };
 }
@@ -568,40 +675,71 @@ async function loadAll() {
   state.pages.clear(); state.blocks.clear();
   for (const p of pages) state.pages.set(p.id, p);
   for (const b of blocks) state.blocks.set(b.id, b);
+  // meta
+  const fav = await dbGet('meta', 'favourites'); if (fav) state.favourites = fav.value || [];
+  const rec = await dbGet('meta', 'recent'); if (rec) state.recent = rec.value || [];
+  const th = await dbGet('meta', 'theme'); if (th) state.theme = th.value || 'dark';
+  applyTheme();
 }
+function applyTheme() { document.documentElement.classList.toggle('light', state.theme === 'light'); }
+async function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; await dbPut('meta', { key: 'theme', value: state.theme }); applyTheme(); }
+
 async function savePage(p) { p.updated_at = now(); state.pages.set(p.id, p); await dbPut('pages', p); }
 async function saveBlock(b) { b.updated_at = now(); state.blocks.set(b.id, b); await dbPut('blocks', b); }
-async function deletePage(id) {
-  state.pages.delete(id);
-  await dbDel('pages', id);
-  const bls = Array.from(state.blocks.values()).filter(b => b.page_id === id);
-  for (const b of bls) { state.blocks.delete(b.id); await dbDel('blocks', b.id); }
-  const children = Array.from(state.pages.values()).filter(p => p.parent_page_id === id);
-  for (const c of children) await deletePage(c.id);
+async function deletePage(id, hard=false) {
+  const p = state.pages.get(id); if (!p) return;
+  if (hard) {
+    state.pages.delete(id); await dbDel('pages', id);
+    const bls = Array.from(state.blocks.values()).filter(b => b.page_id === id);
+    for (const b of bls) { state.blocks.delete(b.id); await dbDel('blocks', b.id); }
+    const children = Array.from(state.pages.values()).filter(c => c.parent_page_id === id);
+    for (const c of children) await deletePage(c.id, true);
+  } else {
+    p.deleted_at = now(); await savePage(p);
+    const children = Array.from(state.pages.values()).filter(c => c.parent_page_id === id && !c.deleted_at);
+    for (const c of children) await deletePage(c.id, false);
+  }
+}
+async function restorePage(id) {
+  const p = state.pages.get(id); if (!p) return;
+  p.deleted_at = null; await savePage(p);
 }
 async function deleteBlock(id) {
-  state.blocks.delete(id);
-  await dbDel('blocks', id);
+  state.blocks.delete(id); await dbDel('blocks', id);
 }
 
-function blocksFor(pageId) {
+function blocksFor(pageId, includeChildren=true) {
   return Array.from(state.blocks.values())
-    .filter(b => b.page_id === pageId)
+    .filter(b => b.page_id === pageId && !b.deleted_at && (includeChildren || !b.parent_block_id))
     .sort((a, b) => a.position - b.position);
 }
-function childrenOf(parentId) {
+function blocksUnder(pageId, parentBlockId=null) {
+  return Array.from(state.blocks.values())
+    .filter(b => b.page_id === pageId && !b.deleted_at && b.parent_block_id === parentBlockId)
+    .sort((a, b) => a.position - b.position);
+}
+function childrenOf(parentId, includeDeleted=false) {
   return Array.from(state.pages.values())
-    .filter(p => p.parent_page_id === parentId)
+    .filter(p => p.parent_page_id === parentId && (includeDeleted || !p.deleted_at))
     .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
 }
 function pageById(id) { return state.pages.get(id); }
-function pageByTitle(q) {
-  const lq = q.toLowerCase();
-  return Array.from(state.pages.values()).find(p => p.title.toLowerCase() === lq);
+function pageByTitle(q) { const lq = q.toLowerCase(); return Array.from(state.pages.values()).find(p => !p.deleted_at && p.title.toLowerCase() === lq); }
+
+// Recent tracking
+async function pushRecent(pageId) {
+  state.recent = [pageId, ...state.recent.filter(id => id !== pageId)].slice(0, 12);
+  await dbPut('meta', { key: 'recent', value: state.recent });
+}
+async function toggleFav(pageId) {
+  if (state.favourites.includes(pageId)) state.favourites = state.favourites.filter(id => id !== pageId);
+  else state.favourites = [pageId, ...state.favourites];
+  await dbPut('meta', { key: 'favourites', value: state.favourites });
+  renderSidebar();
 }
 
 // ════════════════════════════════════════════════════════════════
-// Markdown shortcuts (inline)
+// Markdown inline render
 // ════════════════════════════════════════════════════════════════
 function mdInline(s) {
   if (!s) return '';
@@ -618,109 +756,146 @@ function mdInline(s) {
     .replace(/`([^`\n]+)`/g, '<code>$1</code>')
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
-// reverse — DOM → markdown source (used on input handler for storage)
-function domToText(el) {
-  // For storage: keep raw markdown source the user typed. We achieve this by
-  // storing innerText (preserving user-typed ** and [[ ]] markers).
-  // Since we render via innerHTML = mdInline(content), the contenteditable
-  // shows the parsed HTML. To round-trip we need a different strategy:
-  // we keep CONTENT as the user's typed source, and render lazily on blur,
-  // or always render and let user edit through the rendered HTML.
-  // Simpler v1: store as innerText. Bold/italic shortcuts work on re-render after blur.
-  return (el.innerText || '').replace(/ /g, ' ');
-}
 
 // ════════════════════════════════════════════════════════════════
-// Render
+// Render: sidebar
 // ════════════════════════════════════════════════════════════════
-function render() {
-  renderSidebar();
-  renderContent();
-}
+function render() { renderSidebar(); renderContent(); }
 function renderSidebar() {
   const tree = $('#pageTree');
-  const roots = state.filteredTree
-    ? Array.from(state.pages.values()).filter(p => state.filteredTree.includes(p.id)).sort((a,b)=>a.title.localeCompare(b.title))
-    : childrenOf(null);
-  if (roots.length === 0) {
-    tree.innerHTML = '<div class="empty">No pages yet.<br>Click + Page above.</div>';
+  tree.innerHTML = '';
+  if (state.filteredTree) {
+    const pages = state.filteredTree.map(id => state.pages.get(id)).filter(Boolean);
+    if (!pages.length) tree.innerHTML = '<div class="empty">No matches.</div>';
+    else {
+      const sec = document.createElement('div'); sec.className = 'nav-section'; sec.textContent = 'Search results'; tree.appendChild(sec);
+      for (const p of pages) { if (!p.deleted_at) tree.appendChild(renderTreeNode(p, 0, true)); }
+    }
     return;
   }
-  tree.innerHTML = '';
+  // Favourites
+  const favs = state.favourites.map(id => state.pages.get(id)).filter(p => p && !p.deleted_at);
+  if (favs.length) {
+    const sec = document.createElement('div'); sec.className = 'nav-section'; sec.textContent = '★ Favourites'; tree.appendChild(sec);
+    for (const p of favs) tree.appendChild(renderTreeNode(p, 0, true));
+  }
+  // Recent
+  const recents = state.recent.map(id => state.pages.get(id)).filter(p => p && !p.deleted_at && !state.favourites.includes(p.id)).slice(0, 5);
+  if (recents.length) {
+    const sec = document.createElement('div'); sec.className = 'nav-section'; sec.textContent = '◷ Recent'; tree.appendChild(sec);
+    for (const p of recents) tree.appendChild(renderTreeNode(p, 0, true));
+  }
+  // Workspace tree
+  const sec2 = document.createElement('div'); sec2.className = 'nav-section'; sec2.textContent = '◊ Workspace'; tree.appendChild(sec2);
+  const roots = childrenOf(null);
+  if (!roots.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No pages yet. Click + Page above.'; tree.appendChild(e); return; }
   for (const p of roots) tree.appendChild(renderTreeNode(p, 0));
 }
-function renderTreeNode(p, depth) {
+function renderTreeNode(p, depth, flat=false) {
   const wrap = document.createElement('div');
   const node = document.createElement('div');
   node.className = 'tree-node' + (state.currentPageId === p.id ? ' active' : '');
   node.dataset.pageId = p.id;
-  const children = childrenOf(p.id);
+  node.draggable = true;
+  const children = flat ? [] : childrenOf(p.id);
   const expanded = state.treeExpanded.has(p.id);
   const twirl = `<span class="twirl ${expanded ? 'open' : ''} ${children.length ? '' : 'empty'}">▶</span>`;
   const icon = `<span class="icon">${p.is_database ? '⛁' : (p.icon || '📄')}</span>`;
   const title = `<span class="title">${esc(p.title || 'Untitled')}</span>`;
+  const starred = state.favourites.includes(p.id);
+  const star = `<button class="row-star ${starred ? 'starred' : ''}" title="${starred ? 'Unstar' : 'Favourite'}">${starred ? '★' : '☆'}</button>`;
   const addBtn = `<button class="row-add" title="New child page">+</button>`;
-  node.innerHTML = twirl + icon + title + addBtn;
+  node.innerHTML = twirl + icon + title + star + addBtn;
   node.addEventListener('click', e => {
     if (e.target.classList.contains('twirl')) {
       if (expanded) state.treeExpanded.delete(p.id); else state.treeExpanded.add(p.id);
       renderSidebar();
     } else if (e.target.classList.contains('row-add')) {
-      e.stopPropagation();
-      newPage(p.id);
-    } else {
-      openPage(p.id);
-    }
+      e.stopPropagation(); newPage(p.id);
+    } else if (e.target.classList.contains('row-star')) {
+      e.stopPropagation(); toggleFav(p.id);
+    } else openPage(p.id);
+  });
+  // drag-drop for tree reorder
+  node.addEventListener('dragstart', e => { e.dataTransfer.setData('text/page-id', p.id); e.dataTransfer.effectAllowed = 'move'; });
+  node.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+  node.addEventListener('drop', async e => {
+    e.preventDefault(); e.stopPropagation();
+    const draggedId = e.dataTransfer.getData('text/page-id');
+    if (!draggedId || draggedId === p.id) return;
+    const dragged = state.pages.get(draggedId); if (!dragged) return;
+    // Move dragged to be a sibling AFTER target
+    dragged.parent_page_id = p.parent_page_id;
+    await savePage(dragged);
+    renderSidebar();
   });
   wrap.appendChild(node);
   if (expanded && children.length) {
-    const childWrap = document.createElement('div');
-    childWrap.className = 'tree-children';
+    const childWrap = document.createElement('div'); childWrap.className = 'tree-children';
     for (const c of children) childWrap.appendChild(renderTreeNode(c, depth + 1));
     wrap.appendChild(childWrap);
   }
   return wrap;
 }
 
+// ════════════════════════════════════════════════════════════════
+// Render: content
+// ════════════════════════════════════════════════════════════════
 function renderContent() {
   const content = $('#content');
   if (!state.currentPageId) {
     content.innerHTML = `
       <div class="empty-page">
         <h2>fallnote</h2>
-        <p>Block-based note + database substrate. Local. Sovereign. MIT.</p>
+        <p>Block-based notes + databases. Local. Sovereign. MIT.</p>
         <p>Click <strong>+ Page</strong> in the sidebar to start.<br>
-        Or press <kbd style="font-family:var(--mono);background:var(--ink);padding:2px 6px;border-radius:2px;font-size:11px;border:1px solid var(--line);">Ctrl/Cmd + K</kbd> for the command palette.</p>
+        Press <kbd style="font-family:var(--mono);background:var(--ink);padding:2px 6px;border-radius:2px;font-size:11px;border:1px solid var(--line);">Ctrl/Cmd + K</kbd> for the command palette.</p>
         <button onclick="newPage()">+ Create your first page</button>
       </div>`;
     return;
   }
   const p = pageById(state.currentPageId);
-  if (!p) { content.innerHTML = '<div class="empty-page"><p>Page not found.</p></div>'; return; }
+  if (!p || p.deleted_at) { content.innerHTML = '<div class="empty-page"><p>Page not found (deleted?).</p></div>'; return; }
   if (p.is_database) renderDatabase(p); else renderPage(p);
 }
 
-function renderPage(p) {
-  const content = $('#content');
+function renderPageHeader(p, extraBtns='') {
   const crumbs = buildCrumbs(p);
-  content.innerHTML = `
+  const isFav = state.favourites.includes(p.id);
+  return `
+    ${renderCover(p)}
     <div class="page-wrap">
       <div class="page-header">
         <div class="page-meta">
           <div class="crumb">${crumbs.map((c,i) => `<a data-page-id="${c.id}">${esc(c.title || 'Untitled')}</a>${i < crumbs.length-1 ? '<span class="sep">›</span>' : ''}`).join('')}</div>
-          <button class="action-btn" onclick="exportPageMd('${p.id}')" title="Export this page as markdown">⤓ MD</button>
+          <button class="action-btn" onclick="toggleFav('${p.id}')" title="Favourite">${isFav ? '★' : '☆'}</button>
+          ${!p.cover ? `<button class="action-btn" onclick="pickCover()" title="Add cover">＋ Cover</button>` : ''}
+          ${extraBtns}
           <button class="action-btn" onclick="newSubPage('${p.id}')" title="New sub-page">+ Sub</button>
-          <button class="action-btn" onclick="deleteCurrentPage()" title="Delete">✕</button>
+          <button class="action-btn danger" onclick="deleteCurrentPage()" title="Move to trash">🗑</button>
         </div>
         <div class="page-icon-row">
           <div class="page-icon" onclick="changePageIcon()">${p.icon || '📄'}</div>
           <div class="page-title" contenteditable="true" data-placeholder="Untitled" oninput="onTitleInput(this)" onkeydown="onTitleKey(event)">${esc(p.title || '')}</div>
         </div>
-      </div>
+      </div>`;
+}
+function renderCover(p) {
+  if (!p.cover) return '';
+  return `<div class="page-cover" style="background-image:url(${p.cover})">
+    <div class="cover-actions">
+      <button onclick="pickCover()">Change</button>
+      <button onclick="removeCover()">Remove</button>
+    </div>
+  </div>`;
+}
+
+function renderPage(p) {
+  const content = $('#content');
+  content.innerHTML = renderPageHeader(p, `<button class="action-btn" onclick="exportPageMd('${p.id}')" title="Export markdown">⤓ MD</button>`) + `
       <div class="block-list" id="blockList"></div>
       <div class="backlinks" id="backlinks"></div>
     </div>`;
-  // Wire crumb clicks
   $$('#content .crumb a').forEach(a => a.addEventListener('click', () => openPage(a.dataset.pageId)));
   renderBlocks(p);
   renderBacklinks(p);
@@ -729,56 +904,53 @@ function renderPage(p) {
 function renderBlocks(p) {
   const list = $('#blockList');
   list.innerHTML = '';
-  let blocks = blocksFor(p.id);
+  let blocks = blocksUnder(p.id, null);
   if (blocks.length === 0) {
-    // ensure at least one empty block
     const b = makeBlock({ page_id: p.id, position: 0 });
     saveBlock(b);
     blocks = [b];
   }
-  let n = 1;
-  for (const b of blocks) {
-    if (b.type === 'numbered') {
-      // count consecutive numbered
-    }
-    list.appendChild(renderBlock(b));
-  }
-  // Renumber numbered blocks
+  for (const b of blocks) list.appendChild(renderBlock(b, p.id));
   renumber(list);
 }
-function renumber(list) {
+function renumber(container) {
   let count = 0;
-  list.querySelectorAll('.block').forEach(el => {
+  container.querySelectorAll(':scope > .block').forEach(el => {
     if (el.dataset.type === 'numbered') { count += 1; el.dataset.n = String(count); }
     else { count = 0; }
   });
 }
-function renderBlock(b) {
+function renderBlock(b, pageId) {
   const el = document.createElement('div');
   el.className = 'block';
   el.dataset.blockId = b.id;
   el.dataset.type = b.type;
+  el.draggable = true;
   if (b.type === 'todo') el.dataset.checked = String(b.checked || false);
+  if (b.type === 'toggle') el.dataset.open = String(state.toggleOpen.has(b.id));
   let inner = '';
-  if (b.type === 'todo') {
-    inner += `<div class="todo-check" onclick="toggleTodo('${b.id}')">${b.checked ? '✓' : ''}</div>`;
-  }
+  if (b.type === 'todo') inner += `<div class="todo-check" onclick="toggleTodo('${b.id}')">${b.checked ? '✓' : ''}</div>`;
+  if (b.type === 'toggle') inner += `<div class="toggle-arrow" onclick="toggleToggleBlock('${b.id}')">▶</div>`;
   if (b.type === 'divider') {
     inner += '<div class="block-content" data-placeholder="" tabindex="-1"></div>';
   } else if (b.type === 'link-to-page') {
     const linked = pageById(b.page_link_id);
     inner += `<div class="block-content" onclick="openPage('${b.page_link_id}')">${linked ? esc(linked.title || 'Untitled') : '<em>broken link</em>'}</div>`;
+  } else if (b.type === 'image') {
+    if (b.image_data) inner += `<div class="block-content"><img src="${b.image_data}" alt=""></div>`;
+    else inner += `<div class="block-content"><div class="img-placeholder" onclick="pickImageFor('${b.id}')">⬆ Click to upload an image, or paste/drop it here</div></div>`;
   } else {
-    const placeholder = b.position === 0 ? 'Type / for commands, [[ to link, or just write…' : 'Continue…';
+    const placeholder = b.position === 0 ? 'Type / for blocks, [[ to link, or just write…' : '';
     inner += `<div class="block-content" contenteditable="true" data-placeholder="${placeholder}">${mdInline(b.content)}</div>`;
   }
-  inner += `<div class="block-handle"><button onclick="addBlockAfter('${b.id}')" title="Add below">+</button><button onclick="openBlockMenu('${b.id}', this)" title="Block menu">⋮</button></div>`;
+  inner += `<div class="block-handle"><button class="grip" title="Drag · click to add">⋮⋮</button><button onclick="openBlockMenu('${b.id}', this)" title="Block menu">⋯</button></div>`;
   el.innerHTML = inner;
   const ce = el.querySelector('.block-content[contenteditable]');
   if (ce) {
     ce.addEventListener('input', () => onBlockInput(b.id, ce));
     ce.addEventListener('keydown', e => onBlockKeydown(e, b.id, ce));
     ce.addEventListener('blur', () => onBlockBlur(b.id, ce));
+    ce.addEventListener('paste', e => onBlockPaste(e, b.id, ce));
     ce.addEventListener('click', e => {
       const wiki = e.target.closest('.wiki-link');
       if (wiki) {
@@ -787,149 +959,214 @@ function renderBlock(b) {
       }
     });
   }
+  // image drag-drop on the placeholder
+  if (b.type === 'image' && !b.image_data) {
+    const ph = el.querySelector('.img-placeholder');
+    if (ph) {
+      ph.addEventListener('dragover', e => { e.preventDefault(); ph.style.borderColor = 'var(--brass)'; });
+      ph.addEventListener('dragleave', () => { ph.style.borderColor = ''; });
+      ph.addEventListener('drop', e => { e.preventDefault(); ph.style.borderColor = ''; const f = e.dataTransfer.files?.[0]; if (f) loadImageFile(f, b.id); });
+    }
+  }
+  // block drag-drop reorder
+  el.addEventListener('dragstart', e => {
+    if (e.target.closest('.block-content')) { e.preventDefault(); return; }
+    el.classList.add('is-dragging');
+    e.dataTransfer.setData('text/block-id', b.id);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => { el.classList.remove('is-dragging'); });
+  el.addEventListener('dragover', e => {
+    if (!e.dataTransfer.types.includes('text/block-id')) return;
+    e.preventDefault();
+    const rect = el.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    el.classList.toggle('drag-over-top', before);
+    el.classList.toggle('drag-over-bot', !before);
+  });
+  el.addEventListener('dragleave', () => { el.classList.remove('drag-over-top','drag-over-bot'); });
+  el.addEventListener('drop', async e => {
+    if (!e.dataTransfer.types.includes('text/block-id')) return;
+    e.preventDefault(); e.stopPropagation();
+    el.classList.remove('drag-over-top','drag-over-bot');
+    const draggedId = e.dataTransfer.getData('text/block-id');
+    if (!draggedId || draggedId === b.id) return;
+    const rect = el.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    await moveBlock(draggedId, b.id, before);
+  });
   return el;
 }
 
+async function moveBlock(draggedId, targetId, before) {
+  const d = state.blocks.get(draggedId); const t = state.blocks.get(targetId);
+  if (!d || !t) return;
+  const p = pageById(d.page_id); if (!p) return;
+  const siblings = blocksUnder(d.page_id, t.parent_block_id);
+  const others = siblings.filter(b => b.id !== draggedId);
+  const tIdx = others.findIndex(b => b.id === targetId);
+  const insertIdx = before ? tIdx : tIdx + 1;
+  const newOrder = [...others.slice(0, insertIdx), d, ...others.slice(insertIdx)];
+  d.parent_block_id = t.parent_block_id;
+  for (let i = 0; i < newOrder.length; i++) { newOrder[i].position = i; await saveBlock(newOrder[i]); }
+  renderBlocks(p);
+}
+
 function buildCrumbs(p) {
-  const arr = [];
-  let cur = p;
-  while (cur) {
-    arr.unshift({ id: cur.id, title: cur.title });
-    cur = cur.parent_page_id ? pageById(cur.parent_page_id) : null;
-  }
+  const arr = []; let cur = p;
+  while (cur) { arr.unshift({ id: cur.id, title: cur.title }); cur = cur.parent_page_id ? pageById(cur.parent_page_id) : null; }
   return arr;
 }
 
 // ════════════════════════════════════════════════════════════════
-// Database (table view)
+// Database views
 // ════════════════════════════════════════════════════════════════
+function getDbView(dbId) {
+  if (!state.dbView.has(dbId)) state.dbView.set(dbId, { kind: 'table', groupBy: 'status', sortBy: null, sortDir: 'asc', filterBy: [], calMonth: ymd(new Date()).slice(0,7) });
+  return state.dbView.get(dbId);
+}
+
 function renderDatabase(p) {
   const content = $('#content');
-  const crumbs = buildCrumbs(p);
-  const rows = childrenOf(p.id);
-  const schema = p.schema || dbSchemaDefault();
-  if (!p.schema) { p.schema = schema; savePage(p); }
+  if (!p.schema) { p.schema = dbSchemaDefault(); savePage(p); }
+  const view = getDbView(p.id);
+  const rows = childrenOf(p.id).filter(r => !r.deleted_at);
+  const filtered = applyFiltersSort(rows, p.schema, view);
 
-  content.innerHTML = `
-    <div class="page-wrap" style="max-width:1100px">
-      <div class="page-header">
-        <div class="page-meta">
-          <div class="crumb">${crumbs.map((c,i) => `<a data-page-id="${c.id}">${esc(c.title || 'Untitled')}</a>${i < crumbs.length-1 ? '<span class="sep">›</span>' : ''}`).join('')}</div>
-          <button class="action-btn" onclick="newDbRow('${p.id}')">+ Row</button>
-          <button class="action-btn" onclick="exportDbCsv('${p.id}')">⤓ CSV</button>
-          <button class="action-btn" onclick="deleteCurrentPage()">✕</button>
-        </div>
-        <div class="page-icon-row">
-          <div class="page-icon" onclick="changePageIcon()">${p.icon || '⛁'}</div>
-          <div class="page-title" contenteditable="true" data-placeholder="Untitled database" oninput="onTitleInput(this)" onkeydown="onTitleKey(event)">${esc(p.title || '')}</div>
-        </div>
-      </div>
+  content.innerHTML = renderPageHeader(p, `<button class="action-btn" onclick="exportDbCsv('${p.id}')">⤓ CSV</button>`) + `
       <div class="db-wrap">
         <div class="db-toolbar">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--cream-muted);letter-spacing:.08em;text-transform:uppercase">⊞ Table</span>
-          <button onclick="newDbRow('${p.id}')">+ New row</button>
-          <span class="count">${rows.length} rows</span>
+          <button class="view-tab ${view.kind === 'table' ? 'active' : ''}" onclick="setDbView('${p.id}', 'table')">⊞ Table</button>
+          <button class="view-tab ${view.kind === 'board' ? 'active' : ''}" onclick="setDbView('${p.id}', 'board')">⊟ Board</button>
+          <button class="view-tab ${view.kind === 'calendar' ? 'active' : ''}" onclick="setDbView('${p.id}', 'calendar')">▦ Calendar</button>
+          <button class="tool-btn" onclick="openDbFilterMenu('${p.id}', this)">⏷ Filter${view.filterBy?.length ? ` (${view.filterBy.length})` : ''}</button>
+          <button class="tool-btn" onclick="openDbSortMenu('${p.id}', this)">⇅ Sort${view.sortBy ? ` (${view.sortBy})` : ''}</button>
+          ${view.kind === 'board' ? `<button class="tool-btn" onclick="openBoardGroupMenu('${p.id}', this)">Group: ${view.groupBy || 'status'}</button>` : ''}
+          <button class="tool-btn" onclick="newDbRow('${p.id}')">+ New row</button>
+          <span class="count">${filtered.length} of ${rows.length} rows</span>
         </div>
-        <table class="db-table" id="dbTable">
-          <thead><tr id="dbHead"></tr></thead>
-          <tbody id="dbBody"></tbody>
-        </table>
+        <div id="dbViewContent"></div>
       </div>
     </div>`;
   $$('#content .crumb a').forEach(a => a.addEventListener('click', () => openPage(a.dataset.pageId)));
-  renderDbHeader(p);
-  renderDbBody(p, rows);
+  renderDbViewContent(p, filtered);
 }
 
-function renderDbHeader(p) {
-  const head = $('#dbHead');
-  const props = p.schema.properties;
-  let html = `<th class="row-handle" style="width:30px;background:var(--void-2);border-right:1px solid var(--line-soft)"></th>`;
-  for (const prop of props) {
-    html += `<th data-prop-key="${prop.key}" onclick="openPropMenu('${prop.key}', this, '${p.id}')">${esc(prop.name)} <span class="prop-type">${prop.type}</span></th>`;
+function setDbView(dbId, kind) { getDbView(dbId).kind = kind; renderDatabase(pageById(dbId)); }
+
+function applyFiltersSort(rows, schema, view) {
+  let out = [...rows];
+  if (view.filterBy?.length) {
+    out = out.filter(r => view.filterBy.every(f => {
+      const v = f.key === 'title' ? r.title : r.properties?.[f.key];
+      if (f.op === 'equals') return v === f.value || (Array.isArray(v) && v.includes(f.value));
+      if (f.op === 'contains') return String(v || '').toLowerCase().includes(String(f.value || '').toLowerCase());
+      if (f.op === 'checked') return !!v;
+      if (f.op === 'unchecked') return !v;
+      if (f.op === 'not_empty') return v != null && v !== '' && !(Array.isArray(v) && v.length === 0);
+      return true;
+    }));
   }
-  html += `<th class="add-prop" onclick="addDbProperty('${p.id}')">+ Property</th>`;
-  head.innerHTML = html;
+  if (view.sortBy) {
+    const prop = schema.properties.find(p => p.key === view.sortBy);
+    out.sort((a, b) => {
+      let av = view.sortBy === 'title' ? a.title : a.properties?.[view.sortBy];
+      let bv = view.sortBy === 'title' ? b.title : b.properties?.[view.sortBy];
+      av = av == null ? '' : av; bv = bv == null ? '' : bv;
+      if (prop?.type === 'number') return (Number(av) || 0) - (Number(bv) || 0);
+      if (prop?.type === 'date') return String(av).localeCompare(String(bv));
+      return String(av).localeCompare(String(bv));
+    });
+    if (view.sortDir === 'desc') out.reverse();
+  }
+  return out;
 }
 
-function renderDbBody(p, rows) {
-  const body = $('#dbBody');
+function renderDbViewContent(p, rows) {
+  const view = getDbView(p.id);
+  if (view.kind === 'table') renderDbTable(p, rows);
+  else if (view.kind === 'board') renderDbBoard(p, rows);
+  else if (view.kind === 'calendar') renderDbCalendar(p, rows);
+}
+
+function renderDbTable(p, rows) {
+  const c = $('#dbViewContent');
   const props = p.schema.properties;
-  let html = '';
+  const view = getDbView(p.id);
+  let html = `<table class="db-table"><thead><tr>`;
+  html += `<th class="row-handle" style="width:30px"></th>`;
+  for (const prop of props) {
+    const sortMark = view.sortBy === prop.key ? `<span class="sort-mark">${view.sortDir === 'desc' ? '↓' : '↑'}</span>` : '';
+    html += `<th data-prop-key="${prop.key}" onclick="onColumnClick('${prop.key}', '${p.id}', event)">${esc(prop.name)}<span class="prop-type">${prop.type}</span>${sortMark}</th>`;
+  }
+  html += `<th class="add-prop" onclick="addDbProperty('${p.id}')">+</th></tr></thead><tbody>`;
   for (const row of rows) {
     html += `<tr data-row-id="${row.id}">`;
-    html += `<td class="row-handle" onclick="openPage('${row.id}')" title="Open row as page">⋮</td>`;
+    html += `<td class="row-handle" onclick="openPage('${row.id}')" title="Open row">⋮</td>`;
     for (const prop of props) {
-      const val = row.properties?.[prop.key];
+      const val = prop.key === 'title' ? row.title : row.properties?.[prop.key];
       html += renderDbCell(prop, val, row.id);
     }
     html += `<td></td></tr>`;
   }
-  html += `<tr class="add-row-row"><td class="row-handle">＋</td><td colspan="${props.length + 1}" onclick="newDbRow('${p.id}')">＋ New row</td></tr>`;
-  body.innerHTML = html;
-  // Wire cell editing
-  body.querySelectorAll('.cell-edit').forEach(el => {
+  html += `<tr class="add-row-row"><td>＋</td><td colspan="${props.length + 1}" onclick="newDbRow('${p.id}')">＋ New row</td></tr>`;
+  html += `</tbody></table>`;
+  c.innerHTML = html;
+  c.querySelectorAll('.cell-edit').forEach(el => {
     el.addEventListener('blur', () => onDbCellSave(el));
     el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
   });
-  body.querySelectorAll('.checkbox-cell').forEach(el => {
-    el.addEventListener('click', () => onDbCheckboxToggle(el));
-  });
-  body.querySelectorAll('.select-cell').forEach(el => {
-    el.addEventListener('click', () => onDbSelectClick(el, p));
-  });
+  c.querySelectorAll('.checkbox-cell').forEach(el => el.addEventListener('click', () => onDbCheckboxToggle(el)));
+  c.querySelectorAll('.select-cell').forEach(el => el.addEventListener('click', () => onDbSelectClick(el, p)));
+}
+function onColumnClick(key, dbId, e) {
+  // Single click: sort. Click while sorted asc: toggle desc. Click again: unset.
+  const view = getDbView(dbId);
+  if (view.sortBy === key) {
+    if (view.sortDir === 'asc') view.sortDir = 'desc';
+    else { view.sortBy = null; view.sortDir = 'asc'; }
+  } else { view.sortBy = key; view.sortDir = 'asc'; }
+  renderDatabase(pageById(dbId));
 }
 
 function renderDbCell(prop, val, rowId) {
-  const dataAttrs = `data-row-id="${rowId}" data-prop-key="${prop.key}" data-prop-type="${prop.type}"`;
-  if (prop.type === 'title') {
-    return `<td class="title-cell" onclick="openPage('${rowId}')"><div class="cell-edit" contenteditable="true" ${dataAttrs}>${esc(val || '')}</div></td>`;
+  const da = `data-row-id="${rowId}" data-prop-key="${prop.key}" data-prop-type="${prop.type}"`;
+  if (prop.type === 'title') return `<td class="title-cell"><div class="cell-edit" contenteditable="true" ${da}>${esc(val || '')}</div></td>`;
+  if (prop.type === 'text' || prop.type === 'number') return `<td><div class="cell-edit" contenteditable="true" ${da}>${esc(val == null ? '' : val)}</div></td>`;
+  if (prop.type === 'date') {
+    const display = val ? fmtDate(val) : '';
+    return `<td><div class="cell-edit" contenteditable="true" ${da} data-raw="${esc(val || '')}">${esc(display)}</div></td>`;
   }
-  if (prop.type === 'text' || prop.type === 'number' || prop.type === 'date') {
-    let display = val == null ? '' : val;
-    if (prop.type === 'date' && val) display = fmtDate(val);
-    return `<td><div class="cell-edit" contenteditable="true" ${dataAttrs}>${esc(display)}</div></td>`;
-  }
-  if (prop.type === 'checkbox') {
-    return `<td><div class="checkbox-cell ${val ? 'checked' : ''}" ${dataAttrs}>${val ? '☑' : '☐'}</div></td>`;
-  }
+  if (prop.type === 'checkbox') return `<td><div class="checkbox-cell ${val ? 'checked' : ''}" ${da}>${val ? '☑' : '☐'}</div></td>`;
   if (prop.type === 'select') {
     const opt = prop.options?.find(o => o.name === val);
     const tag = opt ? `<span class="tag" data-color="${opt.color}">${esc(opt.name)}</span>` : '';
-    return `<td><div class="select-cell" ${dataAttrs} style="cursor:pointer;min-height:18px">${tag}</div></td>`;
+    return `<td><div class="select-cell" ${da} style="cursor:pointer;min-height:18px">${tag}</div></td>`;
   }
   if (prop.type === 'multi-select') {
     const vals = Array.isArray(val) ? val : (val ? [val] : []);
-    const tags = vals.map(v => {
-      const opt = prop.options?.find(o => o.name === v);
-      return opt ? `<span class="tag" data-color="${opt.color}">${esc(opt.name)}</span>` : `<span class="tag">${esc(v)}</span>`;
-    }).join('');
-    return `<td><div class="select-cell" ${dataAttrs} style="cursor:pointer;min-height:18px">${tags}</div></td>`;
+    const tags = vals.map(v => { const opt = prop.options?.find(o => o.name === v); return opt ? `<span class="tag" data-color="${opt.color}">${esc(opt.name)}</span>` : `<span class="tag">${esc(v)}</span>`; }).join('');
+    return `<td><div class="select-cell" ${da} style="cursor:pointer;min-height:18px">${tags}</div></td>`;
   }
   return `<td></td>`;
 }
 
 async function onDbCellSave(el) {
-  const rowId = el.dataset.rowId;
-  const key = el.dataset.propKey;
-  const type = el.dataset.propType;
-  const row = pageById(rowId);
-  if (!row) return;
+  const rowId = el.dataset.rowId; const key = el.dataset.propKey; const type = el.dataset.propType;
+  const row = pageById(rowId); if (!row) return;
   let raw = el.innerText.trim();
   if (!row.properties) row.properties = {};
   let val = raw;
   if (type === 'number') val = raw === '' ? null : Number(raw);
   if (type === 'date') {
-    // try parse
     if (raw === '') val = null;
     else { const d = new Date(raw); val = isNaN(d) ? raw : d.toISOString().slice(0, 10); }
   }
   if (key === 'title' || type === 'title') row.title = raw;
   row.properties[key] = val;
   await savePage(row);
-  // re-render that cell so date formats
   const parent = pageById(row.parent_page_id);
-  if (parent) renderDbBody(parent, childrenOf(parent.id));
+  if (parent) renderDatabase(parent);
 }
 async function onDbCheckboxToggle(el) {
   const rowId = el.dataset.rowId; const key = el.dataset.propKey;
@@ -941,19 +1178,14 @@ async function onDbCheckboxToggle(el) {
   el.textContent = row.properties[key] ? '☑' : '☐';
 }
 async function onDbSelectClick(el, dbPage) {
-  const rowId = el.dataset.rowId; const key = el.dataset.propKey;
-  const propType = el.dataset.propType;
-  const prop = dbPage.schema.properties.find(p => p.key === key);
-  if (!prop) return;
-  // open popup with options + add new option
+  const rowId = el.dataset.rowId; const key = el.dataset.propKey; const propType = el.dataset.propType;
+  const prop = dbPage.schema.properties.find(p => p.key === key); if (!prop) return;
   const rect = el.getBoundingClientRect();
   const pop = popup(rect.left, rect.bottom + 4);
-  const row = pageById(rowId);
-  if (!row.properties) row.properties = {};
+  const row = pageById(rowId); if (!row.properties) row.properties = {};
   const current = row.properties[key];
   const items = (prop.options || []).map(opt => ({
-    label: opt.name,
-    color: opt.color,
+    label: opt.name, color: opt.color,
     onClick: async () => {
       if (propType === 'multi-select') {
         const arr = Array.isArray(current) ? [...current] : (current ? [current] : []);
@@ -964,58 +1196,252 @@ async function onDbSelectClick(el, dbPage) {
         closePopup();
       }
       await savePage(row);
-      renderDbBody(dbPage, childrenOf(dbPage.id));
-      if (propType === 'multi-select') {
-        // refresh popup
-        onDbSelectClick(el, dbPage);
-      }
-    },
-    icon: '●'
+      renderDatabase(dbPage);
+      if (propType === 'multi-select') onDbSelectClick(el, dbPage);
+    }
   }));
   items.push({
-    label: '+ New option', hint: 'type then enter', icon: '＋',
+    label: '+ New option', hint: 'add to schema',
     onClick: () => {
       closePopup();
-      const name = prompt('Option name:');
-      if (!name) return;
+      const name = prompt('Option name:'); if (!name) return;
       const color = COLORS[(prop.options || []).length % COLORS.length];
       prop.options = [...(prop.options || []), { name, color }];
       savePage(dbPage);
-      // assign to current row
       if (propType === 'multi-select') {
         const arr = Array.isArray(current) ? [...current] : (current ? [current] : []);
         row.properties[key] = [...arr, name];
-      } else {
-        row.properties[key] = name;
-      }
-      savePage(row).then(() => renderDbBody(dbPage, childrenOf(dbPage.id)));
+      } else row.properties[key] = name;
+      savePage(row).then(() => renderDatabase(dbPage));
     }
   });
   for (const it of items) {
-    const node = document.createElement('div');
-    node.className = 'pop-item';
-    const colorEl = it.color ? `<span style="color:var(--${it.color === 'amber' ? 'amber' : it.color});font-size:14px">●</span>` : `<span class="icon">${it.icon || ''}</span>`;
+    const node = document.createElement('div'); node.className = 'pop-item';
+    const colorEl = it.color ? `<span style="color:var(--${it.color});font-size:14px">●</span>` : `<span class="icon">＋</span>`;
     node.innerHTML = `${colorEl}<span class="label">${esc(it.label)}</span>${it.hint ? `<span class="hint">${esc(it.hint)}</span>` : ''}`;
     node.addEventListener('click', it.onClick);
     pop.appendChild(node);
   }
 }
 
+// Board view
+function renderDbBoard(p, rows) {
+  const c = $('#dbViewContent');
+  const view = getDbView(p.id);
+  const groupKey = view.groupBy || 'status';
+  const groupProp = p.schema.properties.find(pr => pr.key === groupKey);
+  let groups = [];
+  if (groupProp && (groupProp.type === 'select')) {
+    groups = (groupProp.options || []).map(o => ({ name: o.name, color: o.color, rows: rows.filter(r => r.properties?.[groupKey] === o.name) }));
+    groups.push({ name: '(no value)', color: null, rows: rows.filter(r => !r.properties?.[groupKey]) });
+  } else {
+    groups = [{ name: '(all)', color: null, rows }];
+  }
+  let html = '<div class="db-board">';
+  for (const g of groups) {
+    html += `<div class="board-col" data-group="${esc(g.name)}"><div class="board-head">
+      ${g.color ? `<span class="tag" data-color="${g.color}">${esc(g.name)}</span>` : `<span class="ttl">${esc(g.name)}</span>`}
+      <span class="count">${g.rows.length}</span>
+      <span class="add" onclick="newDbRowInGroup('${p.id}', '${groupKey}', '${esc(g.name).replace(/'/g, "\\'")}', this)">＋</span>
+    </div><div class="board-list">`;
+    for (const r of g.rows) {
+      html += `<div class="board-card" draggable="true" data-row-id="${r.id}">
+        <div class="bc-title">${esc(r.title || 'Untitled')}</div>
+        <div class="bc-meta">`;
+      for (const prop of p.schema.properties) {
+        if (prop.key === 'title' || prop.key === groupKey) continue;
+        const v = r.properties?.[prop.key]; if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) continue;
+        if (prop.type === 'select') { const opt = prop.options?.find(o=>o.name===v); html += `<span class="tag" data-color="${opt?.color}">${esc(v)}</span>`; }
+        else if (prop.type === 'multi-select') html += (Array.isArray(v) ? v : [v]).map(x => { const opt = prop.options?.find(o=>o.name===x); return `<span class="tag" data-color="${opt?.color || ''}">${esc(x)}</span>`; }).join('');
+        else if (prop.type === 'date') html += `<span style="color:var(--cream-muted);font-family:var(--mono);font-size:10px">📅 ${esc(fmtDate(v))}</span>`;
+        else if (prop.type === 'checkbox') html += v ? '<span style="color:var(--brass)">☑</span>' : '';
+        else html += `<span style="color:var(--cream-muted);font-size:11px">${esc(String(v).slice(0, 60))}</span>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+  html += '</div>';
+  c.innerHTML = html;
+  // wire drag-drop between columns
+  c.querySelectorAll('.board-card').forEach(card => {
+    card.addEventListener('click', e => { if (!card.classList.contains('is-dragging')) openPage(card.dataset.rowId); });
+    card.addEventListener('dragstart', e => { card.classList.add('is-dragging'); e.dataTransfer.setData('text/row-id', card.dataset.rowId); e.dataTransfer.effectAllowed = 'move'; });
+    card.addEventListener('dragend', () => card.classList.remove('is-dragging'));
+  });
+  c.querySelectorAll('.board-col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', async e => {
+      e.preventDefault(); col.classList.remove('drag-over');
+      const rowId = e.dataTransfer.getData('text/row-id'); if (!rowId) return;
+      const row = pageById(rowId); if (!row) return;
+      const newGroup = col.dataset.group;
+      if (!row.properties) row.properties = {};
+      row.properties[groupKey] = newGroup === '(no value)' ? null : newGroup;
+      await savePage(row);
+      renderDatabase(p);
+    });
+  });
+}
+
+async function newDbRowInGroup(dbId, groupKey, groupValue, btn) {
+  btn.stopPropagation && btn.stopPropagation();
+  const dbPage = pageById(dbId); if (!dbPage) return;
+  const row = makePage({ parent_page_id: dbId, title: '', icon: '·', position: childrenOf(dbId).length });
+  row.is_row = true;
+  row.properties = {};
+  if (groupValue !== '(no value)') row.properties[groupKey] = groupValue;
+  await savePage(row);
+  await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
+  renderDatabase(dbPage);
+}
+
+// Calendar view
+function renderDbCalendar(p, rows) {
+  const c = $('#dbViewContent');
+  const view = getDbView(p.id);
+  const monthStr = view.calMonth || ymd(new Date()).slice(0,7);
+  const [y, m] = monthStr.split('-').map(Number);
+  // find date property
+  const dateProp = p.schema.properties.find(pr => pr.type === 'date');
+  if (!dateProp) { c.innerHTML = '<div style="padding:30px;text-align:center;color:var(--cream-muted)">Add a date property to use the calendar view.</div>'; return; }
+  // build month grid
+  const first = new Date(y, m - 1, 1);
+  const startWeekday = first.getDay();
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const todayStr = ymd(new Date());
+
+  // events keyed by yyyy-mm-dd
+  const events = {};
+  for (const r of rows) {
+    const v = r.properties?.[dateProp.key]; if (!v) continue;
+    const k = String(v).slice(0, 10);
+    if (!events[k]) events[k] = [];
+    events[k].push(r);
+  }
+
+  let html = `<div class="db-cal">
+    <div class="cal-head">
+      <button onclick="calNav('${p.id}', -1)">‹</button>
+      <span class="month-label">${MONTHS[m-1]} ${y}</span>
+      <button onclick="calNav('${p.id}', 1)">›</button>
+      <button onclick="calNav('${p.id}', 0)">Today</button>
+      <span style="color:var(--cream-muted);font-size:11px;margin-left:10px">Date prop: <strong>${esc(dateProp.name)}</strong></span>
+    </div>
+    <div class="cal-grid">`;
+  for (const d of DAYS) html += `<div class="cal-day-hdr">${d}</div>`;
+  // leading blanks
+  for (let i = 0; i < startWeekday; i++) {
+    const d = new Date(y, m - 1, -startWeekday + i + 1);
+    html += `<div class="cal-day other-month" onclick="calClickDay('${p.id}', '${ymd(d)}')"><div class="cal-num">${d.getDate()}</div></div>`;
+  }
+  // days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = ds === todayStr;
+    let evHtml = '';
+    if (events[ds]) for (const r of events[ds]) evHtml += `<div class="cal-event" onclick="event.stopPropagation();openPage('${r.id}')">${esc(r.title || 'Untitled')}</div>`;
+    html += `<div class="cal-day ${isToday ? 'today' : ''}" onclick="calClickDay('${p.id}', '${ds}')"><div class="cal-num">${day}</div>${evHtml}</div>`;
+  }
+  // trailing
+  const cells = startWeekday + daysInMonth; const trailing = (7 - (cells % 7)) % 7;
+  for (let i = 0; i < trailing; i++) {
+    const d = new Date(y, m - 1, daysInMonth + i + 1);
+    html += `<div class="cal-day other-month" onclick="calClickDay('${p.id}', '${ymd(d)}')"><div class="cal-num">${d.getDate()}</div></div>`;
+  }
+  html += `</div></div>`;
+  c.innerHTML = html;
+}
+function calNav(dbId, delta) {
+  const view = getDbView(dbId);
+  if (delta === 0) view.calMonth = ymd(new Date()).slice(0,7);
+  else {
+    const [y, m] = view.calMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    view.calMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  renderDatabase(pageById(dbId));
+}
+async function calClickDay(dbId, ds) {
+  const dbPage = pageById(dbId); if (!dbPage) return;
+  const dateProp = dbPage.schema.properties.find(p => p.type === 'date'); if (!dateProp) return;
+  const row = makePage({ parent_page_id: dbId, title: '', icon: '·', position: childrenOf(dbId).length });
+  row.is_row = true; row.properties = { [dateProp.key]: ds };
+  await savePage(row);
+  await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
+  openPage(row.id);
+}
+
+// Filter / sort / group menus
+function openDbFilterMenu(dbId, btn) {
+  const dbPage = pageById(dbId); const view = getDbView(dbId);
+  const rect = btn.getBoundingClientRect(); const pop = popup(rect.left, rect.bottom + 4);
+  const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Add filter'; pop.appendChild(sec);
+  for (const prop of dbPage.schema.properties) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">⏷</span><span class="label">${esc(prop.name)}</span><span class="hint">${prop.type}</span>`;
+    node.addEventListener('click', () => {
+      closePopup();
+      const op = prop.type === 'checkbox' ? 'checked' : (prop.type === 'select' || prop.type === 'multi-select' ? 'equals' : 'contains');
+      const v = op === 'checked' ? true : prompt('Filter value (contains/equals):');
+      if (op !== 'checked' && !v) return;
+      view.filterBy = [...(view.filterBy || []), { key: prop.key, op, value: v }];
+      renderDatabase(dbPage);
+    });
+    pop.appendChild(node);
+  }
+  if (view.filterBy?.length) {
+    const sec2 = document.createElement('div'); sec2.className = 'pop-section'; sec2.textContent = 'Clear'; pop.appendChild(sec2);
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">✕</span><span class="label">Clear all filters</span>`;
+    node.addEventListener('click', () => { view.filterBy = []; closePopup(); renderDatabase(dbPage); });
+    pop.appendChild(node);
+  }
+}
+function openDbSortMenu(dbId, btn) {
+  const dbPage = pageById(dbId); const view = getDbView(dbId);
+  const rect = btn.getBoundingClientRect(); const pop = popup(rect.left, rect.bottom + 4);
+  const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Sort by'; pop.appendChild(sec);
+  for (const prop of dbPage.schema.properties) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">↕</span><span class="label">${esc(prop.name)}</span><span class="hint">${prop.type}</span>`;
+    node.addEventListener('click', () => { view.sortBy = prop.key; view.sortDir = 'asc'; closePopup(); renderDatabase(dbPage); });
+    pop.appendChild(node);
+  }
+  if (view.sortBy) {
+    const sec2 = document.createElement('div'); sec2.className = 'pop-section'; sec2.textContent = 'Direction'; pop.appendChild(sec2);
+    [['asc','Ascending'], ['desc','Descending']].forEach(([d,l]) => {
+      const node = document.createElement('div'); node.className = 'pop-item' + (view.sortDir === d ? ' active' : '');
+      node.innerHTML = `<span class="icon">${d==='asc'?'↑':'↓'}</span><span class="label">${l}</span>`;
+      node.addEventListener('click', () => { view.sortDir = d; closePopup(); renderDatabase(dbPage); });
+      pop.appendChild(node);
+    });
+    const clear = document.createElement('div'); clear.className = 'pop-item';
+    clear.innerHTML = `<span class="icon">✕</span><span class="label">Clear sort</span>`;
+    clear.addEventListener('click', () => { view.sortBy = null; closePopup(); renderDatabase(dbPage); });
+    pop.appendChild(clear);
+  }
+}
+function openBoardGroupMenu(dbId, btn) {
+  const dbPage = pageById(dbId); const view = getDbView(dbId);
+  const rect = btn.getBoundingClientRect(); const pop = popup(rect.left, rect.bottom + 4);
+  for (const prop of dbPage.schema.properties.filter(p => p.type === 'select')) {
+    const node = document.createElement('div'); node.className = 'pop-item' + (view.groupBy === prop.key ? ' active' : '');
+    node.innerHTML = `<span class="icon">⊟</span><span class="label">${esc(prop.name)}</span>`;
+    node.addEventListener('click', () => { view.groupBy = prop.key; closePopup(); renderDatabase(dbPage); });
+    pop.appendChild(node);
+  }
+}
+
 async function newDbRow(dbId) {
   const dbPage = pageById(dbId); if (!dbPage) return;
-  const rows = childrenOf(dbId);
-  const row = makePage({ parent_page_id: dbId, title: '', icon: '·', position: rows.length });
-  row.properties = {};
+  const row = makePage({ parent_page_id: dbId, title: '', icon: '·', position: childrenOf(dbId).length });
+  row.is_row = true; row.properties = {};
   await savePage(row);
-  // give it a starter block so the row-as-page works when opened
-  const b = makeBlock({ page_id: row.id, position: 0 });
-  await saveBlock(b);
-  renderDbBody(dbPage, childrenOf(dbId));
-  // focus the title cell of the new row
-  setTimeout(() => {
-    const cell = $(`tr[data-row-id="${row.id}"] .title-cell .cell-edit`);
-    if (cell) { cell.focus(); }
-  }, 30);
+  await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
+  renderDatabase(dbPage);
+  setTimeout(() => { const cell = $(`tr[data-row-id="${row.id}"] .title-cell .cell-edit`); if (cell) cell.focus(); }, 30);
 }
 
 async function addDbProperty(dbId) {
@@ -1029,40 +1455,9 @@ async function addDbProperty(dbId) {
   renderDatabase(p);
 }
 
-async function openPropMenu(key, th, dbId) {
-  const dbPage = pageById(dbId); if (!dbPage) return;
-  const rect = th.getBoundingClientRect();
-  const pop = popup(rect.left, rect.bottom + 2);
-  const items = [
-    { icon: '✕', label: 'Delete property', onClick: async () => {
-      if (key === 'title') { toast('Title is required', true); closePopup(); return; }
-      if (!confirm('Delete property "' + key + '"? All values lost.')) { closePopup(); return; }
-      dbPage.schema.properties = dbPage.schema.properties.filter(p => p.key !== key);
-      // strip from all rows
-      const rows = childrenOf(dbId);
-      for (const r of rows) { if (r.properties) { delete r.properties[key]; await savePage(r); } }
-      await savePage(dbPage);
-      closePopup();
-      renderDatabase(dbPage);
-    }},
-    { icon: '✎', label: 'Rename', onClick: () => {
-      closePopup();
-      const prop = dbPage.schema.properties.find(p => p.key === key); if (!prop) return;
-      const n = prompt('New name:', prop.name); if (!n) return;
-      prop.name = n; savePage(dbPage).then(() => renderDatabase(dbPage));
-    }},
-  ];
-  for (const it of items) {
-    const node = document.createElement('div'); node.className = 'pop-item';
-    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span>`;
-    node.addEventListener('click', it.onClick);
-    pop.appendChild(node);
-  }
-}
-
 function exportDbCsv(dbId) {
   const p = pageById(dbId); if (!p) return;
-  const rows = childrenOf(dbId);
+  const rows = childrenOf(dbId).filter(r => !r.deleted_at);
   const props = p.schema.properties;
   const head = props.map(pr => pr.name);
   const data = rows.map(r => props.map(pr => {
@@ -1077,36 +1472,27 @@ function exportDbCsv(dbId) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// Page open / actions
+// Page actions
 // ════════════════════════════════════════════════════════════════
 async function openPage(id) {
   state.currentPageId = id;
   state.filteredTree = null; $('#sidebarSearch').value = '';
-  // Expand all ancestors
   let p = pageById(id);
   while (p && p.parent_page_id) { state.treeExpanded.add(p.parent_page_id); p = pageById(p.parent_page_id); }
   await dbPut('meta', { key: 'currentPageId', value: id });
+  await pushRecent(id);
   render();
-  // focus title or first block if empty
   setTimeout(() => {
-    const p2 = pageById(id);
-    if (!p2) return;
-    if (!p2.is_database) {
-      const title = $('.page-title');
-      if (title && !p2.title) title.focus();
-      else {
-        const firstBlock = $('.block-content[contenteditable]');
-        if (firstBlock && !firstBlock.innerText.trim()) firstBlock.focus();
-      }
-    }
+    const p2 = pageById(id); if (!p2 || p2.is_database) return;
+    const title = $('.page-title');
+    if (title && !p2.title) title.focus();
+    else { const fb = $('.block-content[contenteditable]'); if (fb && !fb.innerText.trim()) fb.focus(); }
   }, 30);
 }
-
 async function newPage(parentId = null) {
   const p = makePage({ parent_page_id: parentId, position: childrenOf(parentId).length });
   await savePage(p);
-  const b = makeBlock({ page_id: p.id, position: 0 });
-  await saveBlock(b);
+  await saveBlock(makeBlock({ page_id: p.id, position: 0 }));
   if (parentId) state.treeExpanded.add(parentId);
   await openPage(p.id);
 }
@@ -1121,20 +1507,48 @@ async function newDatabase(parentId = null) {
 async function deleteCurrentPage() {
   if (!state.currentPageId) return;
   const p = pageById(state.currentPageId);
-  if (!confirm('Delete "' + (p.title || 'Untitled') + '" and all sub-pages? Cannot be undone.')) return;
+  if (!confirm('Move "' + (p.title || 'Untitled') + '" to trash? (Restore from Trash anytime.)')) return;
   const parentId = p.parent_page_id;
   await deletePage(state.currentPageId);
-  state.currentPageId = parentId;
-  render();
+  state.currentPageId = parentId; render();
+  toast('Moved to trash');
 }
 async function changePageIcon() {
   if (!state.currentPageId) return;
   const p = pageById(state.currentPageId);
-  const ico = prompt('New icon (single emoji):', p.icon || '📄');
-  if (!ico) return;
-  p.icon = ico;
-  await savePage(p);
-  render();
+  const ico = prompt('New icon (single emoji):', p.icon || '📄'); if (!ico) return;
+  p.icon = ico; await savePage(p); render();
+}
+
+// Cover image
+function pickCover() {
+  const inp = $('#hiddenFileInput'); inp.onchange = async e => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const data = await fileToDataUrl(f);
+    const p = pageById(state.currentPageId); p.cover = data; await savePage(p); render();
+  }; inp.click();
+}
+async function removeCover() {
+  const p = pageById(state.currentPageId); if (!p) return;
+  p.cover = null; await savePage(p); render();
+}
+async function pickImageFor(blockId) {
+  const inp = $('#hiddenFileInput'); inp.onchange = async e => {
+    const f = e.target.files?.[0]; if (!f) return;
+    await loadImageFile(f, blockId);
+  }; inp.click();
+}
+async function loadImageFile(file, blockId) {
+  if (!file.type.startsWith('image/')) { toast('Not an image', true); return; }
+  if (file.size > 5 * 1024 * 1024) { toast('Image > 5MB; consider smaller', true); }
+  const data = await fileToDataUrl(file);
+  const b = state.blocks.get(blockId); if (!b) return;
+  b.image_data = data; b.type = 'image';
+  await saveBlock(b);
+  const p = pageById(b.page_id); if (p) renderBlocks(p);
+}
+function fileToDataUrl(f) {
+  return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(f); });
 }
 
 async function onTitleInput(el) {
@@ -1145,21 +1559,21 @@ async function onTitleInput(el) {
   renderSidebar();
 }
 function onTitleKey(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const first = $('.block-content[contenteditable]'); if (first) first.focus();
-  }
+  if (e.key === 'Enter') { e.preventDefault(); const first = $('.block-content[contenteditable]'); if (first) first.focus(); }
 }
 
 async function toggleTodo(blockId) {
   const b = state.blocks.get(blockId); if (!b) return;
-  b.checked = !b.checked;
-  await saveBlock(b);
+  b.checked = !b.checked; await saveBlock(b);
   const el = document.querySelector(`.block[data-block-id="${blockId}"]`);
-  if (el) {
-    el.dataset.checked = String(b.checked);
-    el.querySelector('.todo-check').textContent = b.checked ? '✓' : '';
-  }
+  if (el) { el.dataset.checked = String(b.checked); el.querySelector('.todo-check').textContent = b.checked ? '✓' : ''; }
+}
+
+function toggleToggleBlock(blockId) {
+  if (state.toggleOpen.has(blockId)) state.toggleOpen.delete(blockId);
+  else state.toggleOpen.add(blockId);
+  const el = document.querySelector(`.block[data-block-id="${blockId}"]`);
+  if (el) el.dataset.open = String(state.toggleOpen.has(blockId));
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1169,43 +1583,37 @@ let saveDebounce = null;
 function onBlockInput(blockId, el) {
   const b = state.blocks.get(blockId); if (!b) return;
   b.content = el.innerText;
-  clearTimeout(saveDebounce);
-  saveDebounce = setTimeout(() => saveBlock(b), 350);
-  // Slash menu trigger
+  clearTimeout(saveDebounce); saveDebounce = setTimeout(() => saveBlock(b), 300);
   const text = el.innerText;
-  if (text === '/' || text.startsWith('/')) {
-    showSlashMenu(blockId, el, text.slice(1));
-  } else { closePopup('slash'); }
-  // Wiki link trigger
+  if (text === '/' || text.startsWith('/')) showSlashMenu(blockId, el, text.slice(1));
+  else closePopup('slash');
   const sel = window.getSelection();
   if (sel.rangeCount > 0) {
     const range = sel.getRangeAt(0);
     const before = (range.startContainer.textContent || '').slice(0, range.startOffset);
     const m = before.match(/\[\[([^\]\n]*)$/);
-    if (m) showWikiMenu(blockId, el, m[1]);
-    else closePopup('wiki');
+    if (m) showWikiMenu(blockId, el, m[1]); else closePopup('wiki');
   }
 }
 async function onBlockBlur(blockId, el) {
   const b = state.blocks.get(blockId); if (!b) return;
-  // Re-render markdown inline (this is when ** becomes bold visually)
-  if (b.content !== el.innerText) {
-    b.content = el.innerText;
-    await saveBlock(b);
-  }
-  el.innerHTML = mdInline(b.content);
+  if (b.content !== el.innerText) { b.content = el.innerText; await saveBlock(b); }
+  if (b.type !== 'image' && b.type !== 'divider' && b.type !== 'link-to-page') el.innerHTML = mdInline(b.content);
 }
-
+function onBlockPaste(e, blockId, el) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const f = item.getAsFile(); if (f) loadImageFile(f, blockId);
+      return;
+    }
+  }
+}
 function onBlockKeydown(e, blockId, el) {
   const b = state.blocks.get(blockId); if (!b) return;
-  // Slash menu navigation
-  if (currentPopup && currentPopupKind === 'slash') {
-    if (e.key === 'ArrowDown') { e.preventDefault(); popupMove(1); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); popupMove(-1); return; }
-    if (e.key === 'Enter') { e.preventDefault(); popupChoose(); return; }
-    if (e.key === 'Escape') { e.preventDefault(); closePopup(); return; }
-  }
-  if (currentPopup && currentPopupKind === 'wiki') {
+  if (currentPopup && (currentPopupKind === 'slash' || currentPopupKind === 'wiki')) {
     if (e.key === 'ArrowDown') { e.preventDefault(); popupMove(1); return; }
     if (e.key === 'ArrowUp') { e.preventDefault(); popupMove(-1); return; }
     if (e.key === 'Enter') { e.preventDefault(); popupChoose(); return; }
@@ -1213,59 +1621,38 @@ function onBlockKeydown(e, blockId, el) {
   }
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
-    addBlockAfter(blockId, b.type === 'numbered' || b.type === 'bullet' || b.type === 'todo' ? b.type : 'paragraph');
-    return;
+    const carry = (b.type === 'numbered' || b.type === 'bullet' || b.type === 'todo') ? b.type : 'paragraph';
+    addBlockAfter(blockId, carry); return;
   }
-  if (e.key === 'Backspace' && el.innerText === '' && b.position > 0) {
-    e.preventDefault();
-    mergeBlockBack(blockId);
-    return;
-  }
-  if (e.key === 'Tab') {
-    // v1: tab inserts indentation char (true nesting in v2)
-    e.preventDefault();
-    document.execCommand('insertText', false, '  ');
-    return;
-  }
+  if (e.key === 'Backspace' && el.innerText === '' && b.position > 0) { e.preventDefault(); mergeBlockBack(blockId); return; }
+  if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); return; }
 }
 
 async function addBlockAfter(blockId, type='paragraph') {
   const b = state.blocks.get(blockId); if (!b) return;
   const p = pageById(b.page_id); if (!p) return;
-  const newB = makeBlock({ page_id: p.id, type, position: b.position + 1 });
-  // shift positions of subsequent blocks
-  const sibs = blocksFor(p.id).filter(x => x.position > b.position);
+  const newB = makeBlock({ page_id: p.id, type, parent_block_id: b.parent_block_id, position: b.position + 1 });
+  const sibs = blocksUnder(p.id, b.parent_block_id).filter(x => x.position > b.position);
   for (const s of sibs) { s.position += 1; await saveBlock(s); }
   await saveBlock(newB);
-  if (p.is_database) renderDatabase(p); else renderBlocks(p);
-  setTimeout(() => {
-    const el = document.querySelector(`.block[data-block-id="${newB.id}"] .block-content[contenteditable]`);
-    if (el) el.focus();
-  }, 20);
+  renderBlocks(p);
+  setTimeout(() => { const el = document.querySelector(`.block[data-block-id="${newB.id}"] .block-content[contenteditable]`); if (el) el.focus(); }, 20);
 }
 
 async function mergeBlockBack(blockId) {
   const b = state.blocks.get(blockId); if (!b) return;
   const p = pageById(b.page_id); if (!p) return;
-  const all = blocksFor(p.id);
-  const idx = all.findIndex(x => x.id === blockId);
+  const sibs = blocksUnder(p.id, b.parent_block_id);
+  const idx = sibs.findIndex(x => x.id === blockId);
   if (idx <= 0) return;
-  const prev = all[idx - 1];
+  const prev = sibs[idx - 1];
   prev.content = (prev.content || '') + (b.content || '');
   await saveBlock(prev);
   await deleteBlock(b.id);
   renderBlocks(p);
   setTimeout(() => {
     const el = document.querySelector(`.block[data-block-id="${prev.id}"] .block-content[contenteditable]`);
-    if (el) {
-      el.focus();
-      // place cursor at the join point
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges(); sel.addRange(range);
-    }
+    if (el) { el.focus(); const range = document.createRange(); const sel = window.getSelection(); range.selectNodeContents(el); range.collapse(false); sel.removeAllRanges(); sel.addRange(range); }
   }, 20);
 }
 
@@ -1273,54 +1660,62 @@ async function setBlockType(blockId, newType) {
   const b = state.blocks.get(blockId); if (!b) return;
   b.type = newType;
   if (newType === 'divider') b.content = '';
+  if (newType === 'toggle') state.toggleOpen.add(blockId);
   await saveBlock(b);
-  const p = pageById(b.page_id);
-  renderBlocks(p);
+  const p = pageById(b.page_id); renderBlocks(p);
 }
 
 async function openBlockMenu(blockId, btn) {
   const b = state.blocks.get(blockId); if (!b) return;
-  const rect = btn.getBoundingClientRect();
-  const pop = popup(rect.left - 200, rect.bottom + 2);
-  const items = [
-    ...BLOCK_TYPES.map(t => ({ icon: t.icon, label: 'Turn into ' + t.label, onClick: async () => { await setBlockType(blockId, t.type); closePopup(); } })),
-    { icon: '✕', label: 'Delete block', onClick: async () => { const p = pageById(b.page_id); await deleteBlock(blockId); if (p) renderBlocks(p); closePopup(); } },
-  ];
-  for (const it of items) {
+  const rect = btn.getBoundingClientRect(); const pop = popup(rect.left - 200, rect.bottom + 2);
+  const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Turn into'; pop.appendChild(sec);
+  for (const t of BLOCK_TYPES) {
     const node = document.createElement('div'); node.className = 'pop-item';
-    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span>`;
-    node.addEventListener('click', it.onClick);
+    node.innerHTML = `<span class="icon">${t.icon}</span><span class="label">${esc(t.label)}</span>`;
+    node.addEventListener('click', async () => { await setBlockType(blockId, t.type); closePopup(); });
     pop.appendChild(node);
   }
+  const sec2 = document.createElement('div'); sec2.className = 'pop-section'; sec2.textContent = 'Actions'; pop.appendChild(sec2);
+  const duplicate = document.createElement('div'); duplicate.className = 'pop-item';
+  duplicate.innerHTML = `<span class="icon">⎘</span><span class="label">Duplicate</span>`;
+  duplicate.addEventListener('click', async () => {
+    const sibs = blocksUnder(b.page_id, b.parent_block_id).filter(x => x.position > b.position);
+    for (const s of sibs) { s.position += 1; await saveBlock(s); }
+    const copy = makeBlock({ page_id: b.page_id, parent_block_id: b.parent_block_id, type: b.type, content: b.content, checked: b.checked, image_data: b.image_data, position: b.position + 1 });
+    await saveBlock(copy);
+    const p = pageById(b.page_id); renderBlocks(p); closePopup();
+  });
+  pop.appendChild(duplicate);
+  const del = document.createElement('div'); del.className = 'pop-item';
+  del.innerHTML = `<span class="icon" style="color:var(--red)">✕</span><span class="label">Delete block</span>`;
+  del.addEventListener('click', async () => { const p = pageById(b.page_id); await deleteBlock(blockId); if (p) renderBlocks(p); closePopup(); });
+  pop.appendChild(del);
 }
 
 // ════════════════════════════════════════════════════════════════
-// Popups (slash, wiki, generic)
+// Popups
 // ════════════════════════════════════════════════════════════════
-let currentPopup = null;
-let currentPopupKind = null;
-let currentPopupItems = []; let currentPopupIdx = 0; let currentPopupContext = null;
-
+let currentPopup = null; let currentPopupKind = null; let currentPopupItems = []; let currentPopupIdx = 0;
 function popup(x, y) {
   closePopup();
-  const el = document.createElement('div');
-  el.className = 'popup';
+  const el = document.createElement('div'); el.className = 'popup';
+  // ensure visible
+  const w = Math.min(window.innerWidth - 20, 320);
+  if (x + w > window.innerWidth) x = window.innerWidth - w - 12;
+  if (x < 8) x = 8;
   el.style.left = x + 'px'; el.style.top = y + 'px';
   document.body.appendChild(el);
-  currentPopup = el;
-  currentPopupKind = 'generic';
+  currentPopup = el; currentPopupKind = 'generic';
   setTimeout(() => document.addEventListener('click', popupOutsideClick), 0);
   return el;
 }
 function closePopup(kind) {
   if (kind && currentPopupKind !== kind) return;
   if (currentPopup) currentPopup.remove();
-  currentPopup = null; currentPopupKind = null; currentPopupItems = []; currentPopupIdx = 0; currentPopupContext = null;
+  currentPopup = null; currentPopupKind = null; currentPopupItems = []; currentPopupIdx = 0;
   document.removeEventListener('click', popupOutsideClick);
 }
-function popupOutsideClick(e) {
-  if (currentPopup && !currentPopup.contains(e.target)) closePopup();
-}
+function popupOutsideClick(e) { if (currentPopup && !currentPopup.contains(e.target)) closePopup(); }
 function popupMove(delta) {
   if (!currentPopupItems.length) return;
   currentPopupIdx = (currentPopupIdx + delta + currentPopupItems.length) % currentPopupItems.length;
@@ -1328,30 +1723,21 @@ function popupMove(delta) {
   items.forEach((it, i) => it.classList.toggle('active', i === currentPopupIdx));
   const active = items[currentPopupIdx]; if (active) active.scrollIntoView({ block: 'nearest' });
 }
-function popupChoose() {
-  const it = currentPopupItems[currentPopupIdx]; if (it && it.onChoose) it.onChoose();
-}
+function popupChoose() { const it = currentPopupItems[currentPopupIdx]; if (it && it.onChoose) it.onChoose(); }
 
 function showSlashMenu(blockId, blockEl, filter) {
-  const rect = blockEl.getBoundingClientRect();
-  const pop = popup(rect.left, rect.bottom + 4);
+  const rect = blockEl.getBoundingClientRect(); const pop = popup(rect.left, rect.bottom + 4);
   currentPopupKind = 'slash';
-  currentPopupContext = { blockId };
   const items = BLOCK_TYPES.filter(t => !filter || t.label.toLowerCase().includes(filter.toLowerCase()) || t.type.includes(filter.toLowerCase())).map(t => ({
     label: t.label, icon: t.icon, hint: t.hint,
     onChoose: async () => {
-      const b = state.blocks.get(blockId);
-      if (b) { b.content = ''; await saveBlock(b); }
-      await setBlockType(blockId, t.type);
-      closePopup();
-      setTimeout(() => {
-        const el = document.querySelector(`.block[data-block-id="${blockId}"] .block-content[contenteditable]`);
-        if (el) el.focus();
-      }, 20);
+      const b = state.blocks.get(blockId); if (b) { b.content = ''; await saveBlock(b); }
+      await setBlockType(blockId, t.type); closePopup();
+      setTimeout(() => { const el = document.querySelector(`.block[data-block-id="${blockId}"] .block-content[contenteditable]`); if (el) el.focus(); }, 20);
     }
   }));
   currentPopupItems = items; currentPopupIdx = 0;
-  if (items.length === 0) { closePopup(); return; }
+  if (!items.length) { closePopup(); return; }
   const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Block types'; pop.appendChild(sec);
   for (const it of items) {
     const node = document.createElement('div'); node.className = 'pop-item';
@@ -1363,54 +1749,42 @@ function showSlashMenu(blockId, blockEl, filter) {
 }
 
 function showWikiMenu(blockId, blockEl, filter) {
-  const rect = blockEl.getBoundingClientRect();
-  const pop = popup(rect.left, rect.bottom + 4);
+  const rect = blockEl.getBoundingClientRect(); const pop = popup(rect.left, rect.bottom + 4);
   currentPopupKind = 'wiki';
-  currentPopupContext = { blockId };
   const matches = Array.from(state.pages.values())
-    .filter(p => !p.title || p.title.toLowerCase().includes((filter || '').toLowerCase()))
-    .filter(p => p.id !== state.currentPageId)
+    .filter(p => !p.deleted_at && p.id !== state.currentPageId)
+    .filter(p => !filter || (p.title || '').toLowerCase().includes((filter || '').toLowerCase()))
     .slice(0, 12);
   const items = matches.map(p => ({
     label: p.title || 'Untitled', icon: p.is_database ? '⛁' : (p.icon || '📄'),
     onChoose: async () => {
-      // Replace the [[partial in the block with [[title]]
       const b = state.blocks.get(blockId); if (!b) return;
-      const sel = window.getSelection();
-      if (sel.rangeCount === 0) { closePopup(); return; }
-      const txt = b.content;
-      const idx = txt.lastIndexOf('[[');
+      const idx = b.content.lastIndexOf('[[');
       if (idx === -1) { closePopup(); return; }
-      b.content = txt.slice(0, idx) + '[[' + (p.title || 'Untitled') + ']]';
+      b.content = b.content.slice(0, idx) + '[[' + (p.title || 'Untitled') + ']]';
       await saveBlock(b);
-      const ce = blockEl;
-      ce.innerText = b.content;
-      // place cursor at end
-      const range = document.createRange(); range.selectNodeContents(ce); range.collapse(false);
+      blockEl.innerText = b.content;
+      const range = document.createRange(); range.selectNodeContents(blockEl); range.collapse(false);
       const s = window.getSelection(); s.removeAllRanges(); s.addRange(range);
       closePopup();
     }
   }));
-  // also offer "Create page: X"
   if (filter && filter.trim()) {
     items.push({ label: 'Create page: ' + filter, icon: '＋', onChoose: async () => {
       closePopup();
       const np = makePage({ title: filter.trim() });
       await savePage(np);
       await saveBlock(makeBlock({ page_id: np.id, position: 0 }));
-      // insert link in current block
       const b = state.blocks.get(blockId); if (!b) return;
-      const txt = b.content;
-      const idx = txt.lastIndexOf('[[');
+      const idx = b.content.lastIndexOf('[[');
       if (idx === -1) return;
-      b.content = txt.slice(0, idx) + '[[' + np.title + ']]';
+      b.content = b.content.slice(0, idx) + '[[' + np.title + ']]';
       await saveBlock(b);
-      renderBlocks(pageById(b.page_id));
-      renderSidebar();
+      renderBlocks(pageById(b.page_id)); renderSidebar();
     }});
   }
   currentPopupItems = items; currentPopupIdx = 0;
-  if (items.length === 0) { closePopup(); return; }
+  if (!items.length) { closePopup(); return; }
   const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Link to page'; pop.appendChild(sec);
   for (const it of items) {
     const node = document.createElement('div'); node.className = 'pop-item';
@@ -1424,8 +1798,7 @@ function showWikiMenu(blockId, blockEl, filter) {
 async function createPageFromWiki(title) {
   const existing = pageByTitle(title);
   if (existing) { openPage(existing.id); return; }
-  const np = makePage({ title });
-  await savePage(np);
+  const np = makePage({ title }); await savePage(np);
   await saveBlock(makeBlock({ page_id: np.id, position: 0 }));
   openPage(np.id);
 }
@@ -1434,26 +1807,22 @@ async function createPageFromWiki(title) {
 // Backlinks
 // ════════════════════════════════════════════════════════════════
 function renderBacklinks(p) {
-  const el = $('#backlinks');
+  const el = $('#backlinks'); if (!el) return;
   const refs = [];
   for (const b of state.blocks.values()) {
-    const c = b.content || '';
-    const matches = c.match(/\[\[([^\]]+)\]\]/g);
-    if (matches) {
-      for (const m of matches) {
-        const t = m.slice(2, -2);
-        if (t.toLowerCase() === (p.title || '').toLowerCase() && b.page_id !== p.id) {
-          refs.push(b);
-        }
-      }
+    if (b.deleted_at) continue;
+    const matches = (b.content || '').match(/\[\[([^\]]+)\]\]/g);
+    if (matches) for (const m of matches) {
+      const t = m.slice(2, -2);
+      if (t.toLowerCase() === (p.title || '').toLowerCase() && b.page_id !== p.id) refs.push(b);
     }
   }
-  if (refs.length === 0) { el.innerHTML = ''; return; }
+  if (!refs.length) { el.innerHTML = ''; return; }
   el.innerHTML = '<h4>↩ Linked from ' + refs.length + ' block' + (refs.length === 1 ? '' : 's') + '</h4>';
   for (const b of refs) {
-    const src = pageById(b.page_id);
-    if (!src) continue;
-    const ctx = (b.content || '').replace(new RegExp('\\[\\[' + (p.title || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\]', 'gi'), m => `<mark>${esc(m)}</mark>`);
+    const src = pageById(b.page_id); if (!src || src.deleted_at) continue;
+    const titleEsc = (p.title || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const ctx = (b.content || '').replace(new RegExp('\\[\\[' + titleEsc + '\\]\\]', 'gi'), m => `<mark>${esc(m)}</mark>`);
     const item = document.createElement('div'); item.className = 'bl-item';
     item.innerHTML = `<div class="src">${esc(src.title || 'Untitled')}</div><div class="ctx">${ctx.length > 280 ? ctx.slice(0, 280) + '…' : ctx}</div>`;
     item.addEventListener('click', () => openPage(b.page_id));
@@ -1466,12 +1835,13 @@ function renderBacklinks(p) {
 // ════════════════════════════════════════════════════════════════
 function onSidebarSearch(q) {
   if (!q || q.trim().length < 2) { state.filteredTree = null; renderSidebar(); return; }
-  const ql = q.toLowerCase();
-  const matches = new Set();
+  const ql = q.toLowerCase(); const matches = new Set();
   for (const p of state.pages.values()) {
+    if (p.deleted_at) continue;
     if ((p.title || '').toLowerCase().includes(ql)) matches.add(p.id);
   }
   for (const b of state.blocks.values()) {
+    if (b.deleted_at) continue;
     if ((b.content || '').toLowerCase().includes(ql)) matches.add(b.page_id);
   }
   state.filteredTree = Array.from(matches);
@@ -1483,16 +1853,13 @@ function onSidebarSearch(q) {
 // ════════════════════════════════════════════════════════════════
 function openCommandPalette() {
   const bg = $('#modalBg');
-  bg.innerHTML = `
-    <div class="modal cmd-modal">
-      <input type="text" id="cmdInput" placeholder="Jump to page or type a command…" autofocus>
-      <div class="cmd-results" id="cmdResults"></div>
-    </div>`;
+  bg.innerHTML = `<div class="modal cmd-modal">
+    <input type="text" id="cmdInput" placeholder="Jump to page or type a command…" autofocus>
+    <div class="cmd-results" id="cmdResults"></div>
+  </div>`;
   bg.classList.add('open');
-  const input = $('#cmdInput');
-  const results = $('#cmdResults');
-  let activeIdx = 0;
-  let currentItems = [];
+  const input = $('#cmdInput'); const results = $('#cmdResults');
+  let activeIdx = 0; let currentItems = [];
   function renderResults(q) {
     q = (q || '').toLowerCase();
     const items = [];
@@ -1500,17 +1867,17 @@ function openCommandPalette() {
     items.push({ kind: 'cmd', label: '+ New database', icon: '⛁', onChoose: () => { closeModal(); newDatabase(); } });
     items.push({ kind: 'cmd', label: '⤓ Export workspace as JSON', icon: '⤓', onChoose: () => { closeModal(); exportWorkspace(); } });
     items.push({ kind: 'cmd', label: '⤒ Import', icon: '⤒', onChoose: () => { closeModal(); openImport(); } });
+    items.push({ kind: 'cmd', label: '🗑 Open trash', icon: '🗑', onChoose: () => { closeModal(); openTrash(); } });
+    items.push({ kind: 'cmd', label: '☾ Toggle light/dark', icon: '☾', onChoose: () => { closeModal(); toggleTheme(); } });
     items.push({ kind: 'cmd', label: '⚙ Settings', icon: '⚙', onChoose: () => { closeModal(); openSettings(); } });
     let filtered = q ? items.filter(it => it.label.toLowerCase().includes(q)) : items;
-    // page jump
     for (const p of state.pages.values()) {
+      if (p.deleted_at) continue;
       if (!q || (p.title || '').toLowerCase().includes(q)) {
         filtered.push({ kind: 'page', label: p.title || 'Untitled', icon: p.is_database ? '⛁' : (p.icon || '📄'), ctx: p.is_database ? 'database' : 'page', onChoose: () => { closeModal(); openPage(p.id); } });
       }
     }
-    filtered = filtered.slice(0, 30);
-    currentItems = filtered;
-    activeIdx = 0;
+    filtered = filtered.slice(0, 30); currentItems = filtered; activeIdx = 0;
     results.innerHTML = filtered.map((it, i) => `<div class="cmd-item ${i === 0 ? 'active' : ''}" data-i="${i}"><span class="icon">${it.icon}</span><span class="lbl">${esc(it.label)}</span>${it.ctx ? `<span class="ctx">${esc(it.ctx)}</span>` : ''}</div>`).join('');
     results.querySelectorAll('.cmd-item').forEach(el => el.addEventListener('click', () => filtered[Number(el.dataset.i)].onChoose()));
   }
@@ -1524,90 +1891,99 @@ function openCommandPalette() {
   });
   function updActive() {
     results.querySelectorAll('.cmd-item').forEach((el, i) => el.classList.toggle('active', i === activeIdx));
-    const active = results.querySelector('.cmd-item.active'); if (active) active.scrollIntoView({ block: 'nearest' });
+    const a = results.querySelector('.cmd-item.active'); if (a) a.scrollIntoView({ block: 'nearest' });
   }
 }
 
 // ════════════════════════════════════════════════════════════════
-// Settings / Export / Import
+// Trash, settings, export, import
 // ════════════════════════════════════════════════════════════════
 function closeModal() { $('#modalBg').classList.remove('open'); $('#modalBg').innerHTML = ''; }
 $('#modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
 
-function openSettings() {
-  const total = state.pages.size;
-  const blocks = state.blocks.size;
-  $('#modalBg').innerHTML = `
-    <div class="modal">
-      <span class="close" onclick="closeModal()">×</span>
-      <h3>Settings</h3>
-      <div class="row" style="font-family:var(--mono);font-size:11px;color:var(--cream-muted);letter-spacing:.04em;line-height:1.7">
-        <div>◊ ${total} pages · ${blocks} blocks · all local · IndexedDB</div>
-      </div>
-      <div class="row">
-        <label>Wipe everything</label>
-        <button class="btn danger" onclick="wipeAll()">Reset workspace (cannot be undone)</button>
-      </div>
-      <div class="row" style="margin-top:14px;color:var(--cream-muted);font-size:12px;line-height:1.6">
-        <div>fallnote v1.0 · MIT · sovereign single-HTML PWA · part of the AI Native Solutions estate.<br>Source: <a href="https://github.com/sjgant80-hub/fallnote" target="_blank">github.com/sjgant80-hub/fallnote</a> · Estate: <a href="https://www.ai-nativesolutions.com" target="_blank">ai-nativesolutions.com</a></div>
-      </div>
-    </div>`;
-  $('#modalBg').classList.add('open');
+function openTrash() {
+  const trash = Array.from(state.pages.values()).filter(p => p.deleted_at && !p.parent_page_id);
+  const orphanRows = Array.from(state.pages.values()).filter(p => p.deleted_at && p.parent_page_id && !state.pages.get(p.parent_page_id)?.deleted_at);
+  const all = [...trash, ...orphanRows].sort((a, b) => (b.deleted_at || '').localeCompare(a.deleted_at || ''));
+  let html = `<div class="modal"><span class="close" onclick="closeModal()">×</span><h3>🗑 Trash</h3>`;
+  if (!all.length) html += `<p style="color:var(--cream-muted);font-size:13px">Empty. Deleted pages appear here.</p>`;
+  else {
+    html += `<div style="max-height:380px;overflow-y:auto">`;
+    for (const p of all) {
+      html += `<div style="padding:8px 10px;border:1px solid var(--line);border-radius:3px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:13px">
+        <span style="font-size:16px">${p.is_database ? '⛁' : (p.icon || '📄')}</span>
+        <span style="flex:1">${esc(p.title || 'Untitled')}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--cream-muted)">${fmtDate(p.deleted_at)}</span>
+        <button class="btn ghost" onclick="restoreTrash('${p.id}')">Restore</button>
+        <button class="btn ghost danger" onclick="purgeTrash('${p.id}')">Purge</button>
+      </div>`;
+    }
+    html += `</div><div class="row-btns"><button class="btn ghost danger" onclick="purgeAllTrash()">Purge all</button></div>`;
+  }
+  html += `</div>`;
+  $('#modalBg').innerHTML = html; $('#modalBg').classList.add('open');
+}
+async function restoreTrash(id) { await restorePage(id); closeModal(); render(); toast('Restored'); }
+async function purgeTrash(id) { if (!confirm('Permanently delete? Cannot be undone.')) return; await deletePage(id, true); openTrash(); }
+async function purgeAllTrash() {
+  if (!confirm('Permanently delete EVERYTHING in trash? Cannot be undone.')) return;
+  const trash = Array.from(state.pages.values()).filter(p => p.deleted_at);
+  for (const p of trash) { state.pages.delete(p.id); await dbDel('pages', p.id); }
+  const orphanBlocks = Array.from(state.blocks.values()).filter(b => !state.pages.has(b.page_id));
+  for (const b of orphanBlocks) { state.blocks.delete(b.id); await dbDel('blocks', b.id); }
+  closeModal(); render(); toast('Purged');
 }
 
+function openSettings() {
+  const total = Array.from(state.pages.values()).filter(p => !p.deleted_at).length;
+  const trash = Array.from(state.pages.values()).filter(p => p.deleted_at).length;
+  const blocks = Array.from(state.blocks.values()).filter(b => !b.deleted_at).length;
+  $('#modalBg').innerHTML = `<div class="modal">
+    <span class="close" onclick="closeModal()">×</span>
+    <h3>Settings</h3>
+    <div class="row" style="font-family:var(--mono);font-size:11px;color:var(--cream-muted);letter-spacing:.04em;line-height:1.7">
+      <div>◊ ${total} pages · ${blocks} blocks · ${trash} in trash · IndexedDB local · v2.0</div>
+    </div>
+    <div class="row"><label>Theme</label><button class="btn ghost" onclick="toggleTheme();closeModal()">Toggle light / dark</button></div>
+    <div class="row"><label>Wipe everything</label><button class="btn danger" onclick="wipeAll()">Reset workspace</button></div>
+    <div class="row" style="margin-top:14px;color:var(--cream-muted);font-size:12px;line-height:1.6">
+      fallnote v2.0 · MIT · sovereign single-HTML PWA · part of the AI Native Solutions estate.<br>
+      <a href="https://github.com/sjgant80-hub/fallnote" target="_blank">github.com/sjgant80-hub/fallnote</a> · <a href="https://www.ai-nativesolutions.com" target="_blank">ai-nativesolutions.com</a>
+    </div>
+  </div>`;
+  $('#modalBg').classList.add('open');
+}
 async function wipeAll() {
-  if (!confirm('Delete EVERY page and block from this browser? Cannot be undone.')) return;
+  if (!confirm('Delete EVERY page and block? Cannot be undone.')) return;
   await db.close();
-  await new Promise((resolve, reject) => {
-    const r = indexedDB.deleteDatabase(DB_NAME);
-    r.onsuccess = resolve; r.onerror = reject;
-  });
+  await new Promise((resolve, reject) => { const r = indexedDB.deleteDatabase(DB_NAME); r.onsuccess = resolve; r.onerror = reject; });
   location.reload();
 }
 
 function openExport() {
-  $('#modalBg').innerHTML = `
-    <div class="modal">
-      <span class="close" onclick="closeModal()">×</span>
-      <h3>Export</h3>
-      <div class="row"><label>Whole workspace</label><button class="btn brass" onclick="exportWorkspace()">⤓ Download JSON</button></div>
-      <div class="row"><label>Current page</label><button class="btn brass" onclick="exportPageMd(state.currentPageId)" ${state.currentPageId ? '' : 'disabled'}>⤓ Download .md</button></div>
-      <div class="row" style="color:var(--cream-muted);font-size:11px;line-height:1.5">
-        JSON contains every page, every block, every database — fully restorable into any fallnote install. Markdown export per-page is for hand-off to other tools (loses database structure).
-      </div>
-    </div>`;
+  $('#modalBg').innerHTML = `<div class="modal">
+    <span class="close" onclick="closeModal()">×</span><h3>Export</h3>
+    <div class="row"><label>Whole workspace</label><button class="btn brass" onclick="exportWorkspace()">⤓ Download JSON</button></div>
+    <div class="row"><label>Current page</label><button class="btn brass" onclick="exportPageMd(state.currentPageId)" ${state.currentPageId ? '' : 'disabled'}>⤓ Download .md</button></div>
+    <div class="row" style="color:var(--cream-muted);font-size:11px;line-height:1.5">JSON = full restorable workspace. Markdown = per-page handoff (loses database structure).</div>
+  </div>`;
   $('#modalBg').classList.add('open');
 }
-
 function exportWorkspace() {
-  const data = {
-    fallnote_version: '1.0',
-    exported_at: now(),
-    pages: Array.from(state.pages.values()),
-    blocks: Array.from(state.blocks.values()),
-  };
+  const data = { fallnote_version: '2.0', exported_at: now(), pages: Array.from(state.pages.values()), blocks: Array.from(state.blocks.values()), meta: { favourites: state.favourites, recent: state.recent } };
   downloadFile(JSON.stringify(data, null, 2), 'fallnote-workspace-' + Date.now() + '.json', 'application/json');
-  toast('Workspace exported');
-  closeModal();
+  toast('Workspace exported'); closeModal();
 }
-
 function exportPageMd(pageId) {
   const p = pageById(pageId); if (!p) return;
   const lines = [`# ${p.icon || ''} ${p.title || 'Untitled'}`, ''];
   if (p.is_database) {
-    const rows = childrenOf(p.id);
-    const props = p.schema.properties;
+    const rows = childrenOf(p.id).filter(r => !r.deleted_at); const props = p.schema.properties;
     lines.push('|' + props.map(pr => ' ' + pr.name + ' ').join('|') + '|');
     lines.push('|' + props.map(() => '---').join('|') + '|');
-    for (const r of rows) {
-      lines.push('|' + props.map(pr => {
-        const v = pr.key === 'title' ? r.title : r.properties?.[pr.key];
-        return ' ' + (Array.isArray(v) ? v.join(', ') : (v == null ? '' : String(v))) + ' ';
-      }).join('|') + '|');
-    }
+    for (const r of rows) lines.push('|' + props.map(pr => { const v = pr.key === 'title' ? r.title : r.properties?.[pr.key]; return ' ' + (Array.isArray(v) ? v.join(', ') : (v == null ? '' : String(v))) + ' '; }).join('|') + '|');
   } else {
-    const blocks = blocksFor(p.id);
-    let n = 1;
+    const blocks = blocksUnder(p.id, null); let n = 1;
     for (const b of blocks) {
       const c = b.content || '';
       if (b.type === 'h1') lines.push('# ' + c);
@@ -1616,14 +1992,15 @@ function exportPageMd(pageId) {
       else if (b.type === 'bullet') lines.push('- ' + c);
       else if (b.type === 'numbered') { lines.push(n + '. ' + c); n++; continue; }
       else if (b.type === 'todo') lines.push('- [' + (b.checked ? 'x' : ' ') + '] ' + c);
+      else if (b.type === 'toggle') lines.push('<details><summary>' + c + '</summary>\n</details>');
       else if (b.type === 'quote') lines.push('> ' + c);
       else if (b.type === 'callout') lines.push('> [!NOTE] ' + c);
       else if (b.type === 'code') lines.push('```\n' + c + '\n```');
       else if (b.type === 'divider') lines.push('---');
+      else if (b.type === 'image') lines.push('![image](data:embedded)');
       else if (b.type === 'link-to-page') { const lp = pageById(b.page_link_id); lines.push('[[' + (lp ? lp.title : 'broken') + ']]'); }
       else lines.push(c);
-      n = 1;
-      lines.push('');
+      n = 1; lines.push('');
     }
   }
   downloadFile(lines.join('\n'), (p.title || 'page') + '.md', 'text/markdown');
@@ -1631,35 +2008,21 @@ function exportPageMd(pageId) {
 }
 
 function openImport() {
-  $('#modalBg').innerHTML = `
-    <div class="modal">
-      <span class="close" onclick="closeModal()">×</span>
-      <h3>Import</h3>
-      <div class="row">
-        <label>Markdown (.md)</label>
-        <input type="file" id="importMd" accept=".md,.markdown,text/markdown" multiple>
-      </div>
-      <div class="row">
-        <label>JSON workspace</label>
-        <input type="file" id="importJson" accept=".json,application/json">
-      </div>
-      <div class="row-btns">
-        <button class="btn ghost" onclick="closeModal()">Close</button>
-      </div>
-    </div>`;
+  $('#modalBg').innerHTML = `<div class="modal">
+    <span class="close" onclick="closeModal()">×</span><h3>Import</h3>
+    <div class="row"><label>Markdown (.md)</label><button class="btn brass" onclick="document.getElementById('hiddenFileInputMd').click()">⤒ Pick files…</button></div>
+    <div class="row"><label>JSON workspace</label><button class="btn brass" onclick="document.getElementById('hiddenFileInputJson').click()">⤒ Pick file…</button></div>
+    <div class="row-btns"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  </div>`;
   $('#modalBg').classList.add('open');
-  $('#importMd').addEventListener('change', e => importMarkdown(e.target.files));
-  $('#importJson').addEventListener('change', e => importWorkspace(e.target.files[0]));
 }
 
 async function importMarkdown(files) {
   let n = 0;
   for (const f of files) {
-    const txt = await f.text();
-    const lines = txt.split(/\r?\n/);
+    const txt = await f.text(); const lines = txt.split(/\r?\n/);
     const title = (lines[0].replace(/^#+\s*/, '').trim()) || f.name.replace(/\.md$/, '');
-    const p = makePage({ title });
-    await savePage(p);
+    const p = makePage({ title }); await savePage(p);
     let pos = 0;
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
@@ -1673,47 +2036,35 @@ async function importMarkdown(files) {
       else if (/^>\s+/.test(line)) { type = 'quote'; content = line.replace(/^>\s+/, ''); }
       else if (/^---+$/.test(line)) { type = 'divider'; content = ''; }
       else if (/^```/.test(line)) {
-        // code block — gather until closing
-        let codeLines = [];
-        i++;
+        let codeLines = []; i++;
         while (i < lines.length && !/^```/.test(lines[i])) { codeLines.push(lines[i]); i++; }
         type = 'code'; content = codeLines.join('\n');
       }
       if (line.trim() === '' && type === 'paragraph') continue;
-      const b = makeBlock({ page_id: p.id, type, content, checked, position: pos++ });
-      await saveBlock(b);
+      await saveBlock(makeBlock({ page_id: p.id, type, content, checked, position: pos++ }));
     }
     n++;
   }
-  toast(n + ' page' + (n === 1 ? '' : 's') + ' imported');
-  closeModal();
-  render();
+  toast(n + ' page' + (n === 1 ? '' : 's') + ' imported'); closeModal(); render();
 }
 
 async function importWorkspace(file) {
   if (!file) return;
-  const txt = await file.text();
-  let data;
+  const txt = await file.text(); let data;
   try { data = JSON.parse(txt); } catch (e) { toast('Invalid JSON', true); return; }
   if (data.fallnote_version) {
     for (const p of data.pages || []) { state.pages.set(p.id, p); await dbPut('pages', p); }
     for (const b of data.blocks || []) { state.blocks.set(b.id, b); await dbPut('blocks', b); }
+    if (data.meta?.favourites) { state.favourites = data.meta.favourites; await dbPut('meta', { key: 'favourites', value: state.favourites }); }
     toast((data.pages?.length || 0) + ' pages, ' + (data.blocks?.length || 0) + ' blocks imported');
-  } else {
-    // Notion JSON export (best-effort)
-    toast('Notion JSON import: best-effort, single-page only', true);
-  }
-  closeModal();
-  render();
+  } else toast('Unknown format', true);
+  closeModal(); render();
 }
 
 function downloadFile(content, filename, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: mime }); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1722,53 +2073,53 @@ function downloadFile(content, filename, mime) {
 function toggleSidebar() { $('#app').classList.toggle('mobile-sidebar-open'); }
 
 // ════════════════════════════════════════════════════════════════
-// Onboarding: first-load welcome content
+// Onboarding
 // ════════════════════════════════════════════════════════════════
 async function seedWelcomeIfEmpty() {
-  if (state.pages.size > 0) return;
-  // Welcome page
+  if (Array.from(state.pages.values()).filter(p => !p.deleted_at).length > 0) return;
   const welcome = makePage({ title: 'Welcome to fallnote', icon: '◊', position: 0 });
   await savePage(welcome);
-  const blocks = [
-    { type: 'h1', content: 'Welcome to fallnote' },
-    { type: 'paragraph', content: 'A sovereign block-based note + database substrate. Your Notion alternative — local, MIT, single HTML file.' },
-    { type: 'h2', content: 'Try it' },
-    { type: 'callout', content: 'Type / for the block menu · type [[ to link to a page · type **bold** *italic* `code` ~~strike~~ as you write.' },
-    { type: 'h3', content: 'Keyboard' },
-    { type: 'bullet', content: 'Enter = new block' },
-    { type: 'bullet', content: 'Shift+Enter = line break in block' },
-    { type: 'bullet', content: 'Backspace at start = merge with previous' },
-    { type: 'bullet', content: 'Ctrl/Cmd + K = command palette' },
-    { type: 'h3', content: 'What this is NOT' },
-    { type: 'paragraph', content: 'Not a SaaS. Not a subscription. Not synced anywhere by default. Your data lives in this browser. Export the workspace anytime — it is one .json file you own.' },
+  const seedBlocks = [
+    { type: 'h1', content: 'Welcome to fallnote v2' },
+    { type: 'paragraph', content: 'A sovereign block-based notes + database substrate. Notion-shaped, single HTML file, MIT, IndexedDB local.' },
+    { type: 'callout', content: 'Type **/** for blocks · type **[[** to link to a page · paste an image to embed it · drag block handles to reorder. Press **Ctrl/Cmd + K** for the command palette.' },
+    { type: 'h2', content: 'What it has' },
+    { type: 'bullet', content: '14 block types (paragraph, h1/h2/h3, bullet, numbered, todo, **toggle**, quote, callout, code, **image**, divider, link-to-page)' },
+    { type: 'bullet', content: 'Databases with **3 views** — table · board (Kanban) · calendar' },
+    { type: 'bullet', content: 'Filter + sort + group on any database view' },
+    { type: 'bullet', content: 'Drag-and-drop block reordering, drag rows between Kanban columns' },
+    { type: 'bullet', content: 'Page covers, page icons, favourites, recent pages' },
+    { type: 'bullet', content: 'Wiki links with autocomplete and backlinks' },
+    { type: 'bullet', content: 'Markdown shortcuts: `**bold**` `*italic*` `` `code` `` `~~strike~~`' },
+    { type: 'bullet', content: 'Trash with restore, light/dark theme, full workspace JSON export' },
+    { type: 'h2', content: 'What it does NOT do' },
+    { type: 'bullet', content: 'Phone home. Nothing leaves your device. Open DevTools → Network.' },
+    { type: 'bullet', content: 'Charge a subscription. Save the HTML, it runs offline forever.' },
+    { type: 'bullet', content: 'Lock your data in. Export the whole workspace as one .json file.' },
     { type: 'h3', content: 'Try a database' },
-    { type: 'paragraph', content: 'Click + Database in the sidebar to make a structured table. Add properties, fill rows, sort, filter.' },
+    { type: 'paragraph', content: 'Click **+ DB** in the sidebar — your new database opens with a default schema. Switch between Table / Board / Calendar in the toolbar. Drag cards between columns. Click any row-handle (⋮) to open that row as a sub-page.' },
     { type: 'divider', content: '' },
     { type: 'quote', content: 'If you stop paying for SaaS, you stop using it. If you stop paying for fallnote, you keep using it. There is no paying for fallnote.' },
     { type: 'paragraph', content: 'Built by Simon Gant · part of the [[AI Native Solutions]] estate · ai-nativesolutions.com' },
   ];
-  for (let i = 0; i < blocks.length; i++) {
-    const b = makeBlock({ page_id: welcome.id, position: i, type: blocks[i].type, content: blocks[i].content });
-    await saveBlock(b);
-  }
-  // Example database
-  const tasks = makePage({ title: 'Tasks (example database)', icon: '⛁', is_database: true, position: 1 });
-  tasks.schema = dbSchemaDefault();
-  await savePage(tasks);
+  for (let i = 0; i < seedBlocks.length; i++) await saveBlock(makeBlock({ page_id: welcome.id, position: i, type: seedBlocks[i].type, content: seedBlocks[i].content }));
+
+  const tasks = makePage({ title: 'Tasks · example board', icon: '⛁', is_database: true, position: 1 });
+  tasks.schema = dbSchemaDefault(); await savePage(tasks);
   const sampleRows = [
-    { title: 'Try fallnote', status: 'Doing', due: new Date().toISOString().slice(0, 10), tags: ['fallnote'], notes: '' },
-    { title: 'Read the spec', status: 'Todo', due: null, tags: ['fallnote', 'spec'], notes: '' },
-    { title: 'Fork this seed', status: 'Todo', due: null, tags: [], notes: 'optional' },
+    { title: 'Try fallnote', status: 'Doing', due: ymd(new Date()), tags: ['fallnote'] },
+    { title: 'Switch to Board view', status: 'Todo', due: null, tags: ['fallnote'] },
+    { title: 'Drag a card between columns', status: 'Todo', due: null, tags: [] },
+    { title: 'Open Calendar view', status: 'Todo', due: null, tags: [] },
+    { title: 'Fork this seed', status: 'Done', due: null, tags: ['done'] },
   ];
   for (let i = 0; i < sampleRows.length; i++) {
-    const r = sampleRows[i];
-    const row = makePage({ parent_page_id: tasks.id, title: r.title, position: i });
-    row.properties = { title: r.title, status: r.status, due: r.due, tags: r.tags, notes: r.notes };
-    await savePage(row);
-    await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
+    const r = sampleRows[i]; const row = makePage({ parent_page_id: tasks.id, title: r.title, position: i }); row.is_row = true;
+    row.properties = { title: r.title, status: r.status, due: r.due, tags: r.tags, notes: '' };
+    await savePage(row); await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
   }
-  state.currentPageId = welcome.id;
-  state.treeExpanded.add(welcome.id);
+  state.currentPageId = welcome.id; state.treeExpanded.add(welcome.id);
+  state.dbView.set(tasks.id, { kind: 'board', groupBy: 'status', sortBy: null, sortDir: 'asc', filterBy: [], calMonth: ymd(new Date()).slice(0,7) });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1780,17 +2131,16 @@ window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); toast('auto-saved'); }
 });
 
+document.getElementById('hiddenFileInputMd').addEventListener('change', e => importMarkdown(e.target.files));
+document.getElementById('hiddenFileInputJson').addEventListener('change', e => importWorkspace(e.target.files[0]));
+
 (async () => {
   try {
-    await openDB();
-    await loadAll();
+    await openDB(); await loadAll();
     const meta = await dbGet('meta', 'currentPageId');
-    if (meta && state.pages.has(meta.value)) state.currentPageId = meta.value;
+    if (meta && state.pages.has(meta.value) && !state.pages.get(meta.value).deleted_at) state.currentPageId = meta.value;
     await seedWelcomeIfEmpty();
-    if (!state.currentPageId) {
-      const first = childrenOf(null)[0];
-      if (first) state.currentPageId = first.id;
-    }
+    if (!state.currentPageId) { const first = childrenOf(null)[0]; if (first) state.currentPageId = first.id; }
     if (state.currentPageId) {
       let p = pageById(state.currentPageId);
       while (p && p.parent_page_id) { state.treeExpanded.add(p.parent_page_id); p = pageById(p.parent_page_id); }
