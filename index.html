@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>◊ fallnote · the Notion killer · sovereign single-HTML block editor</title>
+<meta name="description" content="fallnote — sovereign block-based note + database substrate. Pages, nested pages, databases with table view, slash commands, wiki links, backlinks, markdown shortcuts. Single HTML PWA, IndexedDB primary, MIT. The Notion killer.">
+<meta name="prime" content="1283">
+<meta name="category" content="behaviour">
+<link rel="manifest" href='data:application/manifest+json,{"name":"fallnote","short_name":"fallnote","start_url":".","display":"standalone","background_color":"%230b0a0f","theme_color":"%23b8974a","description":"Sovereign block-based note + database substrate · Notion killer","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27><rect width=%2764%27 height=%2764%27 fill=%27%230b0a0f%27/><text x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%23b8974a%27 font-family=%27serif%27 font-weight=%27bold%27>◊</text></svg>","sizes":"any","type":"image/svg+xml"}]}'>
+<style>
+:root {
+  --void:#0b0a0f; --void-2:#13121a; --ink:#1a1922; --ink-hover:#22212c;
+  --line:#2a2934; --line-soft:#1f1e28;
+  --cream:#e6e1d6; --cream-dim:#a8a395; --cream-muted:#6e6a5e;
+  --brass:#b8974a; --amber:#ff8c00; --ox:#8b1a1a;
+  --green:#4ade80; --red:#ef4444; --blue:#60a5fa; --yellow:#fbbf24; --violet:#a855f7;
+  --serif: Georgia, 'Libre Baskerville', ui-serif, serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'IBM Plex Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --sidebar-w: 260px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--void); color: var(--cream); font: 14.5px/1.6 var(--sans);
+  min-height: 100dvh; -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; background: transparent; border: none; color: inherit; }
+input, textarea, select {
+  font-family: inherit; background: var(--ink); border: 1px solid var(--line);
+  color: var(--cream); border-radius: 3px; padding: 7px 10px; outline: none; font-size: 13px;
+}
+input:focus, textarea:focus { border-color: var(--brass); }
+a { color: var(--brass); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── App layout ─── */
+.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 100dvh; }
+.app.no-sidebar { grid-template-columns: 0 1fr; }
+
+/* ─── Sidebar ─── */
+aside.sidebar {
+  background: var(--void-2); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+aside.sidebar .brand {
+  display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+  border-bottom: 1px solid var(--line); user-select: none;
+}
+aside.sidebar .brand .mark {
+  width: 28px; height: 28px; background: linear-gradient(135deg, var(--brass), var(--amber));
+  border-radius: 5px; display: grid; place-items: center;
+  font-family: var(--serif); font-weight: 700; font-size: 16px; color: var(--void);
+}
+aside.sidebar .brand .name {
+  font-family: var(--serif); font-weight: 700; font-size: 15px;
+}
+aside.sidebar .brand .v {
+  margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--cream-muted);
+  letter-spacing: .12em; text-transform: uppercase;
+}
+aside.sidebar .actions {
+  padding: 10px 12px; display: flex; gap: 6px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-soft);
+}
+aside.sidebar .actions button {
+  padding: 6px 10px; background: var(--ink); border: 1px solid var(--line);
+  border-radius: 3px; font-size: 12px; color: var(--cream-dim); flex: 1; min-width: 0;
+}
+aside.sidebar .actions button:hover { background: var(--ink-hover); color: var(--cream); border-color: var(--brass); }
+aside.sidebar .search-wrap { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); }
+aside.sidebar .search-wrap input { width: 100%; font-size: 12px; padding: 6px 9px; }
+
+aside.sidebar nav.tree {
+  flex: 1; overflow-y: auto; padding: 8px 6px 24px;
+}
+aside.sidebar nav.tree .empty {
+  padding: 18px 14px; color: var(--cream-muted); font-size: 12px; text-align: center;
+}
+.tree-node {
+  display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 3px;
+  cursor: pointer; font-size: 13px; color: var(--cream-dim); user-select: none;
+  white-space: nowrap; overflow: hidden;
+}
+.tree-node:hover { background: var(--ink); color: var(--cream); }
+.tree-node.active { background: rgba(184,151,74,.14); color: var(--brass); }
+.tree-node .twirl {
+  width: 14px; height: 14px; display: grid; place-items: center; flex-shrink: 0;
+  font-size: 9px; color: var(--cream-muted); transition: transform .14s;
+}
+.tree-node .twirl.empty { visibility: hidden; }
+.tree-node .twirl.open { transform: rotate(90deg); }
+.tree-node .icon { flex-shrink: 0; font-size: 13px; }
+.tree-node .title { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.tree-node .row-add {
+  opacity: 0; flex-shrink: 0; padding: 2px 6px; font-size: 14px; color: var(--cream-muted);
+  border-radius: 2px;
+}
+.tree-node:hover .row-add { opacity: 1; }
+.tree-node .row-add:hover { background: var(--brass); color: var(--void); }
+.tree-children { padding-left: 14px; }
+
+aside.sidebar footer {
+  padding: 10px 12px; border-top: 1px solid var(--line-soft); display: flex; gap: 4px;
+  font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .04em;
+}
+aside.sidebar footer button { padding: 5px 8px; border-radius: 2px; }
+aside.sidebar footer button:hover { background: var(--ink); color: var(--brass); }
+
+/* ─── Main content ─── */
+main.content {
+  overflow-y: auto; padding: 36px clamp(40px, 8vw, 120px) 200px;
+}
+main.content .empty-page {
+  max-width: 720px; margin: 80px auto; text-align: center; color: var(--cream-muted);
+}
+main.content .empty-page h2 { font-family: var(--serif); font-size: 22px; color: var(--brass); margin-bottom: 8px; }
+main.content .empty-page p { font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+main.content .empty-page button {
+  padding: 9px 16px; background: var(--brass); color: var(--void); font-weight: 600;
+  font-size: 13px; border-radius: 3px;
+}
+main.content .empty-page button:hover { background: var(--amber); }
+
+.page-wrap { max-width: 780px; margin: 0 auto; }
+.page-header { margin-bottom: 22px; }
+.page-icon-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.page-icon {
+  font-size: 42px; line-height: 1; padding: 4px 8px; border-radius: 4px; cursor: pointer;
+  user-select: none;
+}
+.page-icon:hover { background: var(--ink); }
+.page-title {
+  font-family: var(--serif); font-weight: 700; font-size: 38px; line-height: 1.15;
+  color: var(--cream); background: transparent; border: none; outline: none;
+  width: 100%; padding: 4px 0; letter-spacing: -.01em;
+}
+.page-title:empty:before { content: attr(data-placeholder); color: var(--cream-muted); }
+.page-meta {
+  display: flex; align-items: center; gap: 14px; padding: 6px 0;
+  font-family: var(--mono); font-size: 11px; color: var(--cream-muted); letter-spacing: .04em;
+}
+.page-meta .crumb a { color: var(--cream-muted); }
+.page-meta .crumb a:hover { color: var(--brass); }
+.page-meta .crumb .sep { margin: 0 4px; color: var(--line); }
+.page-meta .action-btn {
+  padding: 3px 8px; border: 1px solid var(--line); border-radius: 3px;
+  background: var(--ink); color: var(--cream-dim); font-size: 10px;
+}
+.page-meta .action-btn:hover { border-color: var(--brass); color: var(--brass); }
+
+/* ─── Blocks ─── */
+.block-list { padding: 4px 0; }
+.block {
+  position: relative; padding: 2px 0 2px 28px; min-height: 28px;
+  display: flex; align-items: flex-start; gap: 4px;
+}
+.block:hover .block-handle { opacity: .8; }
+.block-handle {
+  position: absolute; left: -2px; top: 3px; opacity: 0;
+  display: flex; gap: 1px; transition: opacity .14s;
+}
+.block-handle button {
+  width: 18px; height: 22px; padding: 0; display: grid; place-items: center;
+  color: var(--cream-muted); font-size: 14px; border-radius: 2px;
+}
+.block-handle button:hover { background: var(--ink); color: var(--brass); }
+.block-content {
+  flex: 1; outline: none; min-height: 24px; padding: 2px 0;
+  font-size: 15px; line-height: 1.55; word-wrap: break-word;
+}
+.block-content:empty:before {
+  content: attr(data-placeholder); color: var(--cream-muted); pointer-events: none;
+}
+.block-content.is-empty:before {
+  content: attr(data-placeholder); color: var(--cream-muted); pointer-events: none;
+}
+.block[data-type="h1"] .block-content { font-family: var(--serif); font-size: 28px; font-weight: 700; line-height: 1.2; padding: 14px 0 6px; }
+.block[data-type="h2"] .block-content { font-family: var(--serif); font-size: 22px; font-weight: 700; line-height: 1.25; padding: 10px 0 4px; }
+.block[data-type="h3"] .block-content { font-family: var(--serif); font-size: 17px; font-weight: 700; line-height: 1.3; padding: 8px 0 4px; color: var(--cream); }
+.block[data-type="bullet"] { padding-left: 50px; }
+.block[data-type="bullet"]:before { content: "•"; position: absolute; left: 32px; top: 4px; color: var(--cream-dim); font-size: 16px; }
+.block[data-type="numbered"] { padding-left: 50px; }
+.block[data-type="numbered"]:before { content: attr(data-n) "."; position: absolute; left: 32px; top: 4px; color: var(--cream-dim); font-size: 13px; font-family: var(--mono); }
+.block[data-type="todo"] { padding-left: 50px; }
+.block[data-type="todo"] .todo-check {
+  position: absolute; left: 30px; top: 6px; width: 16px; height: 16px;
+  border: 1.5px solid var(--cream-muted); border-radius: 3px; cursor: pointer;
+  display: grid; place-items: center; font-size: 11px; color: var(--void);
+  background: var(--void); flex-shrink: 0;
+}
+.block[data-type="todo"][data-checked="true"] .todo-check { background: var(--brass); border-color: var(--brass); color: var(--void); }
+.block[data-type="todo"][data-checked="true"] .block-content { color: var(--cream-muted); text-decoration: line-through; }
+.block[data-type="quote"] { padding-left: 36px; }
+.block[data-type="quote"]:before { content: ""; position: absolute; left: 28px; top: 6px; bottom: 6px; width: 3px; background: var(--brass); }
+.block[data-type="quote"] .block-content { font-style: italic; color: var(--cream-dim); }
+.block[data-type="callout"] { padding-left: 28px; }
+.block[data-type="callout"] .block-content {
+  background: var(--ink); border-left: 3px solid var(--brass); border-radius: 3px;
+  padding: 10px 14px; font-size: 14px;
+}
+.block[data-type="code"] .block-content {
+  font-family: var(--mono); font-size: 12.5px; background: var(--ink);
+  padding: 12px 14px; border-radius: 4px; border: 1px solid var(--line);
+  white-space: pre-wrap; tab-size: 2;
+}
+.block[data-type="divider"] { padding: 12px 28px; }
+.block[data-type="divider"] .block-content { display: none; }
+.block[data-type="divider"]:before { content: ""; display: block; height: 1px; background: var(--line); }
+.block[data-type="link-to-page"] .block-content {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  background: var(--ink); border-radius: 3px; cursor: pointer; color: var(--brass);
+  border: 1px solid var(--line);
+}
+.block[data-type="link-to-page"] .block-content:hover { background: var(--ink-hover); border-color: var(--brass); }
+.block[data-type="link-to-page"] .block-content:before { content: "↪"; font-family: var(--mono); }
+.block strong { color: var(--brass); font-weight: 600; }
+.block em { font-style: italic; }
+.block code { font-family: var(--mono); background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 2px; font-size: 12.5px; color: var(--brass); }
+.block s, .block del { color: var(--cream-muted); }
+.block a { color: var(--brass); text-decoration: underline; text-underline-offset: 2px; }
+.wiki-link {
+  color: var(--brass); border-bottom: 1px dashed var(--brass); cursor: pointer; padding: 0 1px;
+}
+.wiki-link.broken { color: var(--ox); border-color: var(--ox); }
+
+/* ─── Database / table ─── */
+.db-wrap { margin: 12px 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.db-toolbar { padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; background: var(--void-2); flex-wrap: wrap; }
+.db-toolbar button { padding: 4px 10px; border: 1px solid var(--line); background: var(--ink); border-radius: 3px; font-size: 11px; color: var(--cream-dim); font-family: var(--mono); letter-spacing: .04em; }
+.db-toolbar button:hover { border-color: var(--brass); color: var(--brass); }
+.db-toolbar .count { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .08em; text-transform: uppercase; margin-left: auto; }
+.db-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.db-table th {
+  background: var(--void-2); padding: 7px 11px; text-align: left;
+  border-bottom: 1px solid var(--line); border-right: 1px solid var(--line-soft);
+  font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .08em;
+  text-transform: uppercase; font-weight: 500; user-select: none; cursor: pointer;
+  position: relative;
+}
+.db-table th:hover { background: var(--ink); color: var(--cream-dim); }
+.db-table th .prop-type { color: var(--violet); font-size: 9px; margin-left: 4px; }
+.db-table th.add-prop { color: var(--cream-muted); cursor: pointer; }
+.db-table th.add-prop:hover { color: var(--brass); }
+.db-table td {
+  padding: 6px 10px; border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+  vertical-align: top; cursor: text;
+}
+.db-table tr:hover td { background: rgba(255,255,255,.02); }
+.db-table tr:hover td.row-handle { background: var(--ink); }
+.db-table td.row-handle { width: 30px; text-align: center; color: var(--cream-muted); cursor: pointer; user-select: none; padding: 6px 4px; }
+.db-table td.row-handle:hover { color: var(--brass); }
+.db-table td.title-cell { color: var(--brass); font-weight: 500; cursor: pointer; }
+.db-table td.title-cell:hover { text-decoration: underline; }
+.db-table td .cell-edit {
+  outline: none; min-height: 18px; padding: 0; background: transparent; border: none;
+  width: 100%; color: var(--cream); font-size: 13px; font-family: inherit;
+}
+.db-table td .cell-edit:focus { background: rgba(184,151,74,.06); }
+.db-table .add-row-row td { padding: 6px 10px; color: var(--cream-muted); cursor: pointer; }
+.db-table .add-row-row:hover td { color: var(--brass); background: var(--ink); }
+.db-table .tag {
+  display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 11px;
+  margin: 1px 2px 1px 0; background: var(--ink); border: 1px solid var(--line);
+}
+.db-table .tag[data-color="green"] { background: rgba(74,222,128,.16); color: var(--green); border-color: var(--green); }
+.db-table .tag[data-color="amber"] { background: rgba(255,140,0,.16); color: var(--amber); border-color: var(--amber); }
+.db-table .tag[data-color="red"] { background: rgba(239,68,68,.16); color: var(--red); border-color: var(--red); }
+.db-table .tag[data-color="blue"] { background: rgba(96,165,250,.16); color: var(--blue); border-color: var(--blue); }
+.db-table .tag[data-color="violet"] { background: rgba(168,85,247,.16); color: var(--violet); border-color: var(--violet); }
+.db-table .checkbox-cell { font-size: 16px; color: var(--cream-muted); cursor: pointer; user-select: none; }
+.db-table .checkbox-cell.checked { color: var(--brass); }
+
+/* ─── Backlinks ─── */
+.backlinks {
+  margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.backlinks h4 { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+.backlinks .bl-item { padding: 8px 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 6px; cursor: pointer; }
+.backlinks .bl-item:hover { border-color: var(--brass); }
+.backlinks .bl-item .src { font-family: var(--mono); font-size: 11px; color: var(--brass); margin-bottom: 4px; letter-spacing: .04em; }
+.backlinks .bl-item .ctx { color: var(--cream-dim); font-size: 12.5px; line-height: 1.5; }
+.backlinks .bl-item .ctx mark { background: rgba(184,151,74,.22); color: var(--brass); padding: 0 3px; border-radius: 2px; }
+
+/* ─── Slash menu / wiki autocomplete / command palette ─── */
+.popup {
+  position: fixed; z-index: 1000; background: var(--void-2); border: 1px solid var(--brass);
+  border-radius: 4px; box-shadow: 0 8px 30px rgba(0,0,0,.6); padding: 4px;
+  max-height: 320px; overflow-y: auto; min-width: 240px; font-size: 13px;
+}
+.popup .pop-item {
+  display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 3px;
+  cursor: pointer; color: var(--cream-dim);
+}
+.popup .pop-item:hover, .popup .pop-item.active { background: var(--ink); color: var(--cream); }
+.popup .pop-item .icon { width: 22px; text-align: center; font-size: 15px; color: var(--brass); flex-shrink: 0; }
+.popup .pop-item .label { flex: 1; }
+.popup .pop-item .hint { font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .04em; }
+.popup .pop-section {
+  font-family: var(--mono); font-size: 9px; color: var(--cream-muted); letter-spacing: .12em;
+  text-transform: uppercase; padding: 8px 10px 4px;
+}
+
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; z-index: 1100;
+  align-items: flex-start; justify-content: center; padding: 80px 20px; overflow-y: auto;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--void-2); border: 1px solid var(--brass); border-radius: 5px;
+  max-width: 560px; width: 100%; padding: 20px 22px; position: relative;
+}
+.modal h3 { font-family: var(--serif); font-size: 17px; margin-bottom: 14px; color: var(--brass); }
+.modal .close { position: absolute; top: 10px; right: 12px; color: var(--cream-muted); font-size: 22px; cursor: pointer; line-height: 1; }
+.modal .close:hover { color: var(--cream); }
+.modal .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.modal label { font-size: 12px; color: var(--cream-dim); min-width: 90px; }
+.modal input[type=text], .modal select, .modal textarea { flex: 1; padding: 7px 10px; }
+.modal .row-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.modal .btn { padding: 7px 14px; border-radius: 3px; font-size: 12px; }
+.modal .btn.brass { background: var(--brass); color: var(--void); font-weight: 600; }
+.modal .btn.brass:hover { background: var(--amber); }
+.modal .btn.ghost { border: 1px solid var(--line); color: var(--cream-dim); }
+.modal .btn.ghost:hover { border-color: var(--brass); color: var(--brass); }
+.modal .btn.danger { color: var(--red); }
+
+.toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--brass); color: var(--void); padding: 8px 18px; border-radius: 3px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 700; opacity: 0; transition: all .2s; z-index: 1200; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--red); color: #fff; }
+
+/* command palette */
+.cmd-modal { padding: 0; max-width: 540px; }
+.cmd-modal input { width: 100%; padding: 14px 18px; font-size: 15px; border: none; background: transparent; border-bottom: 1px solid var(--line); border-radius: 0; }
+.cmd-modal .cmd-results { max-height: 360px; overflow-y: auto; padding: 6px; }
+.cmd-modal .cmd-item { padding: 8px 12px; border-radius: 3px; cursor: pointer; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--cream-dim); }
+.cmd-modal .cmd-item:hover, .cmd-modal .cmd-item.active { background: var(--ink); color: var(--cream); }
+.cmd-modal .cmd-item .lbl { flex: 1; }
+.cmd-modal .cmd-item .kbd { font-family: var(--mono); font-size: 10px; color: var(--cream-muted); padding: 1px 6px; border: 1px solid var(--line); border-radius: 2px; }
+.cmd-modal .cmd-item .ctx { font-size: 11px; color: var(--cream-muted); }
+
+/* sidebar toggle */
+.sidebar-toggle {
+  position: fixed; top: 12px; left: 12px; z-index: 200; padding: 6px 10px;
+  background: var(--ink); border: 1px solid var(--line); border-radius: 3px;
+  color: var(--cream-dim); font-size: 14px; display: none;
+}
+.app.no-sidebar .sidebar-toggle { display: block; }
+.sidebar-toggle:hover { color: var(--brass); border-color: var(--brass); }
+
+/* sovereignty strip */
+.sov {
+  position: fixed; bottom: 8px; right: 10px; font-family: var(--mono); font-size: 9px;
+  color: var(--cream-muted); letter-spacing: .08em; padding: 3px 8px;
+  background: rgba(0,0,0,.6); border-radius: 2px; pointer-events: none;
+}
+
+/* mobile */
+@media (max-width: 720px) {
+  .app { grid-template-columns: 0 1fr; }
+  aside.sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 80vw; max-width: 320px; z-index: 300; transform: translateX(-100%); transition: transform .2s; }
+  .app.mobile-sidebar-open aside.sidebar { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  main.content { padding: 60px 18px 200px; }
+  .page-title { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark">◊</div>
+      <div class="name">fallnote</div>
+      <div class="v">v1.0</div>
+    </div>
+    <div class="actions">
+      <button onclick="newPage()" title="New page (top-level)">+ Page</button>
+      <button onclick="newDatabase()" title="New database">+ Database</button>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="sidebarSearch" placeholder="Search…" oninput="onSidebarSearch(this.value)">
+    </div>
+    <nav class="tree" id="pageTree"></nav>
+    <footer>
+      <button onclick="openExport()" title="Export workspace">⤓ Export</button>
+      <button onclick="openImport()" title="Import">⤒ Import</button>
+      <button onclick="openSettings()" title="Settings">⚙</button>
+      <button onclick="openCommandPalette()" title="Command palette (Ctrl/Cmd-K)">⌘K</button>
+    </footer>
+  </aside>
+
+  <main class="content" id="content"></main>
+
+  <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg"></div>
+<div class="sov">◊ fallnote · sovereign · MIT · IndexedDB local</div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════
+// CONST
+// ════════════════════════════════════════════════════════════════
+const DB_NAME = 'fallnote_db';
+const DB_VERSION = 1;
+const BLOCK_TYPES = [
+  { type: 'paragraph', label: 'Text', icon: '¶', hint: 'plain paragraph' },
+  { type: 'h1',        label: 'Heading 1', icon: 'H₁', hint: 'big heading' },
+  { type: 'h2',        label: 'Heading 2', icon: 'H₂', hint: 'medium heading' },
+  { type: 'h3',        label: 'Heading 3', icon: 'H₃', hint: 'small heading' },
+  { type: 'bullet',    label: 'Bullet list', icon: '•', hint: '- item' },
+  { type: 'numbered',  label: 'Numbered list', icon: '1.', hint: '1. item' },
+  { type: 'todo',      label: 'To-do', icon: '☐', hint: '[ ] task' },
+  { type: 'quote',     label: 'Quote', icon: '❝', hint: 'blockquote' },
+  { type: 'callout',   label: 'Callout', icon: '◊', hint: 'highlighted box' },
+  { type: 'code',      label: 'Code', icon: '</>', hint: 'code block' },
+  { type: 'divider',   label: 'Divider', icon: '—', hint: 'horizontal rule' },
+  { type: 'link-to-page', label: 'Link to page', icon: '↪', hint: 'reference' },
+];
+const PROP_TYPES = [
+  { type: 'text', label: 'Text' },
+  { type: 'number', label: 'Number' },
+  { type: 'date', label: 'Date' },
+  { type: 'select', label: 'Select' },
+  { type: 'multi-select', label: 'Multi-select' },
+  { type: 'checkbox', label: 'Checkbox' },
+];
+const COLORS = ['green','amber','red','blue','violet'];
+
+// ════════════════════════════════════════════════════════════════
+// IndexedDB layer
+// ════════════════════════════════════════════════════════════════
+let db = null;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('pages')) {
+        const s = d.createObjectStore('pages', { keyPath: 'id' });
+        s.createIndex('parent', 'parent_page_id', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('blocks')) {
+        const s = d.createObjectStore('blocks', { keyPath: 'id' });
+        s.createIndex('page', 'page_id', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('meta')) {
+        d.createObjectStore('meta', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+  });
+}
+function tx(stores, mode='readonly') { return db.transaction(stores, mode); }
+function dbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    const r = tx([store]).objectStore(store).get(key);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const r = tx([store]).objectStore(store).getAll();
+    r.onsuccess = () => resolve(r.result || []);
+    r.onerror = () => reject(r.error);
+  });
+}
+function dbPut(store, value) {
+  return new Promise((resolve, reject) => {
+    const r = tx([store], 'readwrite').objectStore(store).put(value);
+    r.onsuccess = () => resolve(value);
+    r.onerror = () => reject(r.error);
+  });
+}
+function dbDel(store, key) {
+  return new Promise((resolve, reject) => {
+    const r = tx([store], 'readwrite').objectStore(store).delete(key);
+    r.onsuccess = () => resolve();
+    r.onerror = () => reject(r.error);
+  });
+}
+function dbIndexQuery(store, index, value) {
+  return new Promise((resolve, reject) => {
+    const r = tx([store]).objectStore(store).index(index).getAll(value);
+    r.onsuccess = () => resolve(r.result || []);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════════════
+const state = {
+  pages: new Map(),       // id -> page
+  blocks: new Map(),      // id -> block
+  currentPageId: null,
+  treeExpanded: new Set(),
+  filteredTree: null,     // null = show full tree; array of page ids = filtered
+  saving: false,
+  saveTimer: null,
+};
+
+const uid = (p='') => p + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const now = () => new Date().toISOString();
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('show'); clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 2400); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+// ════════════════════════════════════════════════════════════════
+// Page + block model
+// ════════════════════════════════════════════════════════════════
+function makePage(opts = {}) {
+  return {
+    id: uid('p_'),
+    parent_page_id: opts.parent_page_id || null,
+    title: opts.title || '',
+    icon: opts.icon || '📄',
+    is_database: !!opts.is_database,
+    schema: opts.schema || null,
+    position: opts.position || 0,
+    created_at: now(), updated_at: now(),
+  };
+}
+function makeBlock(opts = {}) {
+  return {
+    id: uid('b_'),
+    page_id: opts.page_id,
+    type: opts.type || 'paragraph',
+    content: opts.content || '',
+    checked: opts.checked || false,
+    page_link_id: opts.page_link_id || null,
+    position: opts.position || 0,
+    created_at: now(), updated_at: now(),
+  };
+}
+function dbSchemaDefault() {
+  return {
+    properties: [
+      { key: 'title', name: 'Name', type: 'title' },
+      { key: 'status', name: 'Status', type: 'select', options: [
+          {name:'Todo', color:'amber'}, {name:'Doing', color:'blue'}, {name:'Done', color:'green'}] },
+      { key: 'due', name: 'Due', type: 'date' },
+      { key: 'tags', name: 'Tags', type: 'multi-select', options: [] },
+      { key: 'notes', name: 'Notes', type: 'text' },
+    ]
+  };
+}
+
+async function loadAll() {
+  const pages = await dbGetAll('pages');
+  const blocks = await dbGetAll('blocks');
+  state.pages.clear(); state.blocks.clear();
+  for (const p of pages) state.pages.set(p.id, p);
+  for (const b of blocks) state.blocks.set(b.id, b);
+}
+async function savePage(p) { p.updated_at = now(); state.pages.set(p.id, p); await dbPut('pages', p); }
+async function saveBlock(b) { b.updated_at = now(); state.blocks.set(b.id, b); await dbPut('blocks', b); }
+async function deletePage(id) {
+  state.pages.delete(id);
+  await dbDel('pages', id);
+  const bls = Array.from(state.blocks.values()).filter(b => b.page_id === id);
+  for (const b of bls) { state.blocks.delete(b.id); await dbDel('blocks', b.id); }
+  const children = Array.from(state.pages.values()).filter(p => p.parent_page_id === id);
+  for (const c of children) await deletePage(c.id);
+}
+async function deleteBlock(id) {
+  state.blocks.delete(id);
+  await dbDel('blocks', id);
+}
+
+function blocksFor(pageId) {
+  return Array.from(state.blocks.values())
+    .filter(b => b.page_id === pageId)
+    .sort((a, b) => a.position - b.position);
+}
+function childrenOf(parentId) {
+  return Array.from(state.pages.values())
+    .filter(p => p.parent_page_id === parentId)
+    .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
+}
+function pageById(id) { return state.pages.get(id); }
+function pageByTitle(q) {
+  const lq = q.toLowerCase();
+  return Array.from(state.pages.values()).find(p => p.title.toLowerCase() === lq);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Markdown shortcuts (inline)
+// ════════════════════════════════════════════════════════════════
+function mdInline(s) {
+  if (!s) return '';
+  return esc(s)
+    .replace(/\[\[([^\]]+)\]\]/g, (_, t) => {
+      const p = pageByTitle(t);
+      const cls = p ? 'wiki-link' : 'wiki-link broken';
+      const dataId = p ? `data-page-id="${p.id}"` : '';
+      return `<span class="${cls}" ${dataId} data-wiki="${esc(t)}">${esc(t)}</span>`;
+    })
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|\s)\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/~~([^~\n]+)~~/g, '<s>$1</s>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+// reverse — DOM → markdown source (used on input handler for storage)
+function domToText(el) {
+  // For storage: keep raw markdown source the user typed. We achieve this by
+  // storing innerText (preserving user-typed ** and [[ ]] markers).
+  // Since we render via innerHTML = mdInline(content), the contenteditable
+  // shows the parsed HTML. To round-trip we need a different strategy:
+  // we keep CONTENT as the user's typed source, and render lazily on blur,
+  // or always render and let user edit through the rendered HTML.
+  // Simpler v1: store as innerText. Bold/italic shortcuts work on re-render after blur.
+  return (el.innerText || '').replace(/ /g, ' ');
+}
+
+// ════════════════════════════════════════════════════════════════
+// Render
+// ════════════════════════════════════════════════════════════════
+function render() {
+  renderSidebar();
+  renderContent();
+}
+function renderSidebar() {
+  const tree = $('#pageTree');
+  const roots = state.filteredTree
+    ? Array.from(state.pages.values()).filter(p => state.filteredTree.includes(p.id)).sort((a,b)=>a.title.localeCompare(b.title))
+    : childrenOf(null);
+  if (roots.length === 0) {
+    tree.innerHTML = '<div class="empty">No pages yet.<br>Click + Page above.</div>';
+    return;
+  }
+  tree.innerHTML = '';
+  for (const p of roots) tree.appendChild(renderTreeNode(p, 0));
+}
+function renderTreeNode(p, depth) {
+  const wrap = document.createElement('div');
+  const node = document.createElement('div');
+  node.className = 'tree-node' + (state.currentPageId === p.id ? ' active' : '');
+  node.dataset.pageId = p.id;
+  const children = childrenOf(p.id);
+  const expanded = state.treeExpanded.has(p.id);
+  const twirl = `<span class="twirl ${expanded ? 'open' : ''} ${children.length ? '' : 'empty'}">▶</span>`;
+  const icon = `<span class="icon">${p.is_database ? '⛁' : (p.icon || '📄')}</span>`;
+  const title = `<span class="title">${esc(p.title || 'Untitled')}</span>`;
+  const addBtn = `<button class="row-add" title="New child page">+</button>`;
+  node.innerHTML = twirl + icon + title + addBtn;
+  node.addEventListener('click', e => {
+    if (e.target.classList.contains('twirl')) {
+      if (expanded) state.treeExpanded.delete(p.id); else state.treeExpanded.add(p.id);
+      renderSidebar();
+    } else if (e.target.classList.contains('row-add')) {
+      e.stopPropagation();
+      newPage(p.id);
+    } else {
+      openPage(p.id);
+    }
+  });
+  wrap.appendChild(node);
+  if (expanded && children.length) {
+    const childWrap = document.createElement('div');
+    childWrap.className = 'tree-children';
+    for (const c of children) childWrap.appendChild(renderTreeNode(c, depth + 1));
+    wrap.appendChild(childWrap);
+  }
+  return wrap;
+}
+
+function renderContent() {
+  const content = $('#content');
+  if (!state.currentPageId) {
+    content.innerHTML = `
+      <div class="empty-page">
+        <h2>fallnote</h2>
+        <p>Block-based note + database substrate. Local. Sovereign. MIT.</p>
+        <p>Click <strong>+ Page</strong> in the sidebar to start.<br>
+        Or press <kbd style="font-family:var(--mono);background:var(--ink);padding:2px 6px;border-radius:2px;font-size:11px;border:1px solid var(--line);">Ctrl/Cmd + K</kbd> for the command palette.</p>
+        <button onclick="newPage()">+ Create your first page</button>
+      </div>`;
+    return;
+  }
+  const p = pageById(state.currentPageId);
+  if (!p) { content.innerHTML = '<div class="empty-page"><p>Page not found.</p></div>'; return; }
+  if (p.is_database) renderDatabase(p); else renderPage(p);
+}
+
+function renderPage(p) {
+  const content = $('#content');
+  const crumbs = buildCrumbs(p);
+  content.innerHTML = `
+    <div class="page-wrap">
+      <div class="page-header">
+        <div class="page-meta">
+          <div class="crumb">${crumbs.map((c,i) => `<a data-page-id="${c.id}">${esc(c.title || 'Untitled')}</a>${i < crumbs.length-1 ? '<span class="sep">›</span>' : ''}`).join('')}</div>
+          <button class="action-btn" onclick="exportPageMd('${p.id}')" title="Export this page as markdown">⤓ MD</button>
+          <button class="action-btn" onclick="newSubPage('${p.id}')" title="New sub-page">+ Sub</button>
+          <button class="action-btn" onclick="deleteCurrentPage()" title="Delete">✕</button>
+        </div>
+        <div class="page-icon-row">
+          <div class="page-icon" onclick="changePageIcon()">${p.icon || '📄'}</div>
+          <div class="page-title" contenteditable="true" data-placeholder="Untitled" oninput="onTitleInput(this)" onkeydown="onTitleKey(event)">${esc(p.title || '')}</div>
+        </div>
+      </div>
+      <div class="block-list" id="blockList"></div>
+      <div class="backlinks" id="backlinks"></div>
+    </div>`;
+  // Wire crumb clicks
+  $$('#content .crumb a').forEach(a => a.addEventListener('click', () => openPage(a.dataset.pageId)));
+  renderBlocks(p);
+  renderBacklinks(p);
+}
+
+function renderBlocks(p) {
+  const list = $('#blockList');
+  list.innerHTML = '';
+  let blocks = blocksFor(p.id);
+  if (blocks.length === 0) {
+    // ensure at least one empty block
+    const b = makeBlock({ page_id: p.id, position: 0 });
+    saveBlock(b);
+    blocks = [b];
+  }
+  let n = 1;
+  for (const b of blocks) {
+    if (b.type === 'numbered') {
+      // count consecutive numbered
+    }
+    list.appendChild(renderBlock(b));
+  }
+  // Renumber numbered blocks
+  renumber(list);
+}
+function renumber(list) {
+  let count = 0;
+  list.querySelectorAll('.block').forEach(el => {
+    if (el.dataset.type === 'numbered') { count += 1; el.dataset.n = String(count); }
+    else { count = 0; }
+  });
+}
+function renderBlock(b) {
+  const el = document.createElement('div');
+  el.className = 'block';
+  el.dataset.blockId = b.id;
+  el.dataset.type = b.type;
+  if (b.type === 'todo') el.dataset.checked = String(b.checked || false);
+  let inner = '';
+  if (b.type === 'todo') {
+    inner += `<div class="todo-check" onclick="toggleTodo('${b.id}')">${b.checked ? '✓' : ''}</div>`;
+  }
+  if (b.type === 'divider') {
+    inner += '<div class="block-content" data-placeholder="" tabindex="-1"></div>';
+  } else if (b.type === 'link-to-page') {
+    const linked = pageById(b.page_link_id);
+    inner += `<div class="block-content" onclick="openPage('${b.page_link_id}')">${linked ? esc(linked.title || 'Untitled') : '<em>broken link</em>'}</div>`;
+  } else {
+    const placeholder = b.position === 0 ? 'Type / for commands, [[ to link, or just write…' : 'Continue…';
+    inner += `<div class="block-content" contenteditable="true" data-placeholder="${placeholder}">${mdInline(b.content)}</div>`;
+  }
+  inner += `<div class="block-handle"><button onclick="addBlockAfter('${b.id}')" title="Add below">+</button><button onclick="openBlockMenu('${b.id}', this)" title="Block menu">⋮</button></div>`;
+  el.innerHTML = inner;
+  const ce = el.querySelector('.block-content[contenteditable]');
+  if (ce) {
+    ce.addEventListener('input', () => onBlockInput(b.id, ce));
+    ce.addEventListener('keydown', e => onBlockKeydown(e, b.id, ce));
+    ce.addEventListener('blur', () => onBlockBlur(b.id, ce));
+    ce.addEventListener('click', e => {
+      const wiki = e.target.closest('.wiki-link');
+      if (wiki) {
+        if (wiki.dataset.pageId) openPage(wiki.dataset.pageId);
+        else if (wiki.dataset.wiki) createPageFromWiki(wiki.dataset.wiki);
+      }
+    });
+  }
+  return el;
+}
+
+function buildCrumbs(p) {
+  const arr = [];
+  let cur = p;
+  while (cur) {
+    arr.unshift({ id: cur.id, title: cur.title });
+    cur = cur.parent_page_id ? pageById(cur.parent_page_id) : null;
+  }
+  return arr;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Database (table view)
+// ════════════════════════════════════════════════════════════════
+function renderDatabase(p) {
+  const content = $('#content');
+  const crumbs = buildCrumbs(p);
+  const rows = childrenOf(p.id);
+  const schema = p.schema || dbSchemaDefault();
+  if (!p.schema) { p.schema = schema; savePage(p); }
+
+  content.innerHTML = `
+    <div class="page-wrap" style="max-width:1100px">
+      <div class="page-header">
+        <div class="page-meta">
+          <div class="crumb">${crumbs.map((c,i) => `<a data-page-id="${c.id}">${esc(c.title || 'Untitled')}</a>${i < crumbs.length-1 ? '<span class="sep">›</span>' : ''}`).join('')}</div>
+          <button class="action-btn" onclick="newDbRow('${p.id}')">+ Row</button>
+          <button class="action-btn" onclick="exportDbCsv('${p.id}')">⤓ CSV</button>
+          <button class="action-btn" onclick="deleteCurrentPage()">✕</button>
+        </div>
+        <div class="page-icon-row">
+          <div class="page-icon" onclick="changePageIcon()">${p.icon || '⛁'}</div>
+          <div class="page-title" contenteditable="true" data-placeholder="Untitled database" oninput="onTitleInput(this)" onkeydown="onTitleKey(event)">${esc(p.title || '')}</div>
+        </div>
+      </div>
+      <div class="db-wrap">
+        <div class="db-toolbar">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--cream-muted);letter-spacing:.08em;text-transform:uppercase">⊞ Table</span>
+          <button onclick="newDbRow('${p.id}')">+ New row</button>
+          <span class="count">${rows.length} rows</span>
+        </div>
+        <table class="db-table" id="dbTable">
+          <thead><tr id="dbHead"></tr></thead>
+          <tbody id="dbBody"></tbody>
+        </table>
+      </div>
+    </div>`;
+  $$('#content .crumb a').forEach(a => a.addEventListener('click', () => openPage(a.dataset.pageId)));
+  renderDbHeader(p);
+  renderDbBody(p, rows);
+}
+
+function renderDbHeader(p) {
+  const head = $('#dbHead');
+  const props = p.schema.properties;
+  let html = `<th class="row-handle" style="width:30px;background:var(--void-2);border-right:1px solid var(--line-soft)"></th>`;
+  for (const prop of props) {
+    html += `<th data-prop-key="${prop.key}" onclick="openPropMenu('${prop.key}', this, '${p.id}')">${esc(prop.name)} <span class="prop-type">${prop.type}</span></th>`;
+  }
+  html += `<th class="add-prop" onclick="addDbProperty('${p.id}')">+ Property</th>`;
+  head.innerHTML = html;
+}
+
+function renderDbBody(p, rows) {
+  const body = $('#dbBody');
+  const props = p.schema.properties;
+  let html = '';
+  for (const row of rows) {
+    html += `<tr data-row-id="${row.id}">`;
+    html += `<td class="row-handle" onclick="openPage('${row.id}')" title="Open row as page">⋮</td>`;
+    for (const prop of props) {
+      const val = row.properties?.[prop.key];
+      html += renderDbCell(prop, val, row.id);
+    }
+    html += `<td></td></tr>`;
+  }
+  html += `<tr class="add-row-row"><td class="row-handle">＋</td><td colspan="${props.length + 1}" onclick="newDbRow('${p.id}')">＋ New row</td></tr>`;
+  body.innerHTML = html;
+  // Wire cell editing
+  body.querySelectorAll('.cell-edit').forEach(el => {
+    el.addEventListener('blur', () => onDbCellSave(el));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+  });
+  body.querySelectorAll('.checkbox-cell').forEach(el => {
+    el.addEventListener('click', () => onDbCheckboxToggle(el));
+  });
+  body.querySelectorAll('.select-cell').forEach(el => {
+    el.addEventListener('click', () => onDbSelectClick(el, p));
+  });
+}
+
+function renderDbCell(prop, val, rowId) {
+  const dataAttrs = `data-row-id="${rowId}" data-prop-key="${prop.key}" data-prop-type="${prop.type}"`;
+  if (prop.type === 'title') {
+    return `<td class="title-cell" onclick="openPage('${rowId}')"><div class="cell-edit" contenteditable="true" ${dataAttrs}>${esc(val || '')}</div></td>`;
+  }
+  if (prop.type === 'text' || prop.type === 'number' || prop.type === 'date') {
+    let display = val == null ? '' : val;
+    if (prop.type === 'date' && val) display = fmtDate(val);
+    return `<td><div class="cell-edit" contenteditable="true" ${dataAttrs}>${esc(display)}</div></td>`;
+  }
+  if (prop.type === 'checkbox') {
+    return `<td><div class="checkbox-cell ${val ? 'checked' : ''}" ${dataAttrs}>${val ? '☑' : '☐'}</div></td>`;
+  }
+  if (prop.type === 'select') {
+    const opt = prop.options?.find(o => o.name === val);
+    const tag = opt ? `<span class="tag" data-color="${opt.color}">${esc(opt.name)}</span>` : '';
+    return `<td><div class="select-cell" ${dataAttrs} style="cursor:pointer;min-height:18px">${tag}</div></td>`;
+  }
+  if (prop.type === 'multi-select') {
+    const vals = Array.isArray(val) ? val : (val ? [val] : []);
+    const tags = vals.map(v => {
+      const opt = prop.options?.find(o => o.name === v);
+      return opt ? `<span class="tag" data-color="${opt.color}">${esc(opt.name)}</span>` : `<span class="tag">${esc(v)}</span>`;
+    }).join('');
+    return `<td><div class="select-cell" ${dataAttrs} style="cursor:pointer;min-height:18px">${tags}</div></td>`;
+  }
+  return `<td></td>`;
+}
+
+async function onDbCellSave(el) {
+  const rowId = el.dataset.rowId;
+  const key = el.dataset.propKey;
+  const type = el.dataset.propType;
+  const row = pageById(rowId);
+  if (!row) return;
+  let raw = el.innerText.trim();
+  if (!row.properties) row.properties = {};
+  let val = raw;
+  if (type === 'number') val = raw === '' ? null : Number(raw);
+  if (type === 'date') {
+    // try parse
+    if (raw === '') val = null;
+    else { const d = new Date(raw); val = isNaN(d) ? raw : d.toISOString().slice(0, 10); }
+  }
+  if (key === 'title' || type === 'title') row.title = raw;
+  row.properties[key] = val;
+  await savePage(row);
+  // re-render that cell so date formats
+  const parent = pageById(row.parent_page_id);
+  if (parent) renderDbBody(parent, childrenOf(parent.id));
+}
+async function onDbCheckboxToggle(el) {
+  const rowId = el.dataset.rowId; const key = el.dataset.propKey;
+  const row = pageById(rowId); if (!row) return;
+  if (!row.properties) row.properties = {};
+  row.properties[key] = !row.properties[key];
+  await savePage(row);
+  el.classList.toggle('checked');
+  el.textContent = row.properties[key] ? '☑' : '☐';
+}
+async function onDbSelectClick(el, dbPage) {
+  const rowId = el.dataset.rowId; const key = el.dataset.propKey;
+  const propType = el.dataset.propType;
+  const prop = dbPage.schema.properties.find(p => p.key === key);
+  if (!prop) return;
+  // open popup with options + add new option
+  const rect = el.getBoundingClientRect();
+  const pop = popup(rect.left, rect.bottom + 4);
+  const row = pageById(rowId);
+  if (!row.properties) row.properties = {};
+  const current = row.properties[key];
+  const items = (prop.options || []).map(opt => ({
+    label: opt.name,
+    color: opt.color,
+    onClick: async () => {
+      if (propType === 'multi-select') {
+        const arr = Array.isArray(current) ? [...current] : (current ? [current] : []);
+        if (arr.includes(opt.name)) row.properties[key] = arr.filter(v => v !== opt.name);
+        else row.properties[key] = [...arr, opt.name];
+      } else {
+        row.properties[key] = (current === opt.name) ? null : opt.name;
+        closePopup();
+      }
+      await savePage(row);
+      renderDbBody(dbPage, childrenOf(dbPage.id));
+      if (propType === 'multi-select') {
+        // refresh popup
+        onDbSelectClick(el, dbPage);
+      }
+    },
+    icon: '●'
+  }));
+  items.push({
+    label: '+ New option', hint: 'type then enter', icon: '＋',
+    onClick: () => {
+      closePopup();
+      const name = prompt('Option name:');
+      if (!name) return;
+      const color = COLORS[(prop.options || []).length % COLORS.length];
+      prop.options = [...(prop.options || []), { name, color }];
+      savePage(dbPage);
+      // assign to current row
+      if (propType === 'multi-select') {
+        const arr = Array.isArray(current) ? [...current] : (current ? [current] : []);
+        row.properties[key] = [...arr, name];
+      } else {
+        row.properties[key] = name;
+      }
+      savePage(row).then(() => renderDbBody(dbPage, childrenOf(dbPage.id)));
+    }
+  });
+  for (const it of items) {
+    const node = document.createElement('div');
+    node.className = 'pop-item';
+    const colorEl = it.color ? `<span style="color:var(--${it.color === 'amber' ? 'amber' : it.color});font-size:14px">●</span>` : `<span class="icon">${it.icon || ''}</span>`;
+    node.innerHTML = `${colorEl}<span class="label">${esc(it.label)}</span>${it.hint ? `<span class="hint">${esc(it.hint)}</span>` : ''}`;
+    node.addEventListener('click', it.onClick);
+    pop.appendChild(node);
+  }
+}
+
+async function newDbRow(dbId) {
+  const dbPage = pageById(dbId); if (!dbPage) return;
+  const rows = childrenOf(dbId);
+  const row = makePage({ parent_page_id: dbId, title: '', icon: '·', position: rows.length });
+  row.properties = {};
+  await savePage(row);
+  // give it a starter block so the row-as-page works when opened
+  const b = makeBlock({ page_id: row.id, position: 0 });
+  await saveBlock(b);
+  renderDbBody(dbPage, childrenOf(dbId));
+  // focus the title cell of the new row
+  setTimeout(() => {
+    const cell = $(`tr[data-row-id="${row.id}"] .title-cell .cell-edit`);
+    if (cell) { cell.focus(); }
+  }, 30);
+}
+
+async function addDbProperty(dbId) {
+  const p = pageById(dbId); if (!p) return;
+  const name = prompt('Property name:'); if (!name) return;
+  const type = prompt('Type? (text · number · date · select · multi-select · checkbox)', 'text');
+  if (!PROP_TYPES.find(pt => pt.type === type)) { toast('Unknown type', true); return; }
+  const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'prop_' + Date.now();
+  p.schema.properties.push({ key, name, type, options: [] });
+  await savePage(p);
+  renderDatabase(p);
+}
+
+async function openPropMenu(key, th, dbId) {
+  const dbPage = pageById(dbId); if (!dbPage) return;
+  const rect = th.getBoundingClientRect();
+  const pop = popup(rect.left, rect.bottom + 2);
+  const items = [
+    { icon: '✕', label: 'Delete property', onClick: async () => {
+      if (key === 'title') { toast('Title is required', true); closePopup(); return; }
+      if (!confirm('Delete property "' + key + '"? All values lost.')) { closePopup(); return; }
+      dbPage.schema.properties = dbPage.schema.properties.filter(p => p.key !== key);
+      // strip from all rows
+      const rows = childrenOf(dbId);
+      for (const r of rows) { if (r.properties) { delete r.properties[key]; await savePage(r); } }
+      await savePage(dbPage);
+      closePopup();
+      renderDatabase(dbPage);
+    }},
+    { icon: '✎', label: 'Rename', onClick: () => {
+      closePopup();
+      const prop = dbPage.schema.properties.find(p => p.key === key); if (!prop) return;
+      const n = prompt('New name:', prop.name); if (!n) return;
+      prop.name = n; savePage(dbPage).then(() => renderDatabase(dbPage));
+    }},
+  ];
+  for (const it of items) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span>`;
+    node.addEventListener('click', it.onClick);
+    pop.appendChild(node);
+  }
+}
+
+function exportDbCsv(dbId) {
+  const p = pageById(dbId); if (!p) return;
+  const rows = childrenOf(dbId);
+  const props = p.schema.properties;
+  const head = props.map(pr => pr.name);
+  const data = rows.map(r => props.map(pr => {
+    const v = pr.key === 'title' ? r.title : r.properties?.[pr.key];
+    if (Array.isArray(v)) return `"${v.join('; ')}"`;
+    if (v == null) return '';
+    return /[,"\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  }));
+  const csv = [head.map(h => /[,"\n]/.test(h) ? `"${h.replace(/"/g, '""')}"` : h).join(','), ...data.map(r => r.join(','))].join('\n');
+  downloadFile(csv, (p.title || 'database') + '.csv', 'text/csv');
+  toast('CSV downloaded');
+}
+
+// ════════════════════════════════════════════════════════════════
+// Page open / actions
+// ════════════════════════════════════════════════════════════════
+async function openPage(id) {
+  state.currentPageId = id;
+  state.filteredTree = null; $('#sidebarSearch').value = '';
+  // Expand all ancestors
+  let p = pageById(id);
+  while (p && p.parent_page_id) { state.treeExpanded.add(p.parent_page_id); p = pageById(p.parent_page_id); }
+  await dbPut('meta', { key: 'currentPageId', value: id });
+  render();
+  // focus title or first block if empty
+  setTimeout(() => {
+    const p2 = pageById(id);
+    if (!p2) return;
+    if (!p2.is_database) {
+      const title = $('.page-title');
+      if (title && !p2.title) title.focus();
+      else {
+        const firstBlock = $('.block-content[contenteditable]');
+        if (firstBlock && !firstBlock.innerText.trim()) firstBlock.focus();
+      }
+    }
+  }, 30);
+}
+
+async function newPage(parentId = null) {
+  const p = makePage({ parent_page_id: parentId, position: childrenOf(parentId).length });
+  await savePage(p);
+  const b = makeBlock({ page_id: p.id, position: 0 });
+  await saveBlock(b);
+  if (parentId) state.treeExpanded.add(parentId);
+  await openPage(p.id);
+}
+async function newSubPage(parentId) { await newPage(parentId); }
+async function newDatabase(parentId = null) {
+  const p = makePage({ parent_page_id: parentId, icon: '⛁', is_database: true, position: childrenOf(parentId).length });
+  p.schema = dbSchemaDefault();
+  await savePage(p);
+  if (parentId) state.treeExpanded.add(parentId);
+  await openPage(p.id);
+}
+async function deleteCurrentPage() {
+  if (!state.currentPageId) return;
+  const p = pageById(state.currentPageId);
+  if (!confirm('Delete "' + (p.title || 'Untitled') + '" and all sub-pages? Cannot be undone.')) return;
+  const parentId = p.parent_page_id;
+  await deletePage(state.currentPageId);
+  state.currentPageId = parentId;
+  render();
+}
+async function changePageIcon() {
+  if (!state.currentPageId) return;
+  const p = pageById(state.currentPageId);
+  const ico = prompt('New icon (single emoji):', p.icon || '📄');
+  if (!ico) return;
+  p.icon = ico;
+  await savePage(p);
+  render();
+}
+
+async function onTitleInput(el) {
+  if (!state.currentPageId) return;
+  const p = pageById(state.currentPageId); if (!p) return;
+  p.title = el.innerText.trim();
+  await savePage(p);
+  renderSidebar();
+}
+function onTitleKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const first = $('.block-content[contenteditable]'); if (first) first.focus();
+  }
+}
+
+async function toggleTodo(blockId) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  b.checked = !b.checked;
+  await saveBlock(b);
+  const el = document.querySelector(`.block[data-block-id="${blockId}"]`);
+  if (el) {
+    el.dataset.checked = String(b.checked);
+    el.querySelector('.todo-check').textContent = b.checked ? '✓' : '';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Block editing
+// ════════════════════════════════════════════════════════════════
+let saveDebounce = null;
+function onBlockInput(blockId, el) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  b.content = el.innerText;
+  clearTimeout(saveDebounce);
+  saveDebounce = setTimeout(() => saveBlock(b), 350);
+  // Slash menu trigger
+  const text = el.innerText;
+  if (text === '/' || text.startsWith('/')) {
+    showSlashMenu(blockId, el, text.slice(1));
+  } else { closePopup('slash'); }
+  // Wiki link trigger
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    const before = (range.startContainer.textContent || '').slice(0, range.startOffset);
+    const m = before.match(/\[\[([^\]\n]*)$/);
+    if (m) showWikiMenu(blockId, el, m[1]);
+    else closePopup('wiki');
+  }
+}
+async function onBlockBlur(blockId, el) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  // Re-render markdown inline (this is when ** becomes bold visually)
+  if (b.content !== el.innerText) {
+    b.content = el.innerText;
+    await saveBlock(b);
+  }
+  el.innerHTML = mdInline(b.content);
+}
+
+function onBlockKeydown(e, blockId, el) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  // Slash menu navigation
+  if (currentPopup && currentPopupKind === 'slash') {
+    if (e.key === 'ArrowDown') { e.preventDefault(); popupMove(1); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); popupMove(-1); return; }
+    if (e.key === 'Enter') { e.preventDefault(); popupChoose(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); closePopup(); return; }
+  }
+  if (currentPopup && currentPopupKind === 'wiki') {
+    if (e.key === 'ArrowDown') { e.preventDefault(); popupMove(1); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); popupMove(-1); return; }
+    if (e.key === 'Enter') { e.preventDefault(); popupChoose(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); closePopup(); return; }
+  }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    addBlockAfter(blockId, b.type === 'numbered' || b.type === 'bullet' || b.type === 'todo' ? b.type : 'paragraph');
+    return;
+  }
+  if (e.key === 'Backspace' && el.innerText === '' && b.position > 0) {
+    e.preventDefault();
+    mergeBlockBack(blockId);
+    return;
+  }
+  if (e.key === 'Tab') {
+    // v1: tab inserts indentation char (true nesting in v2)
+    e.preventDefault();
+    document.execCommand('insertText', false, '  ');
+    return;
+  }
+}
+
+async function addBlockAfter(blockId, type='paragraph') {
+  const b = state.blocks.get(blockId); if (!b) return;
+  const p = pageById(b.page_id); if (!p) return;
+  const newB = makeBlock({ page_id: p.id, type, position: b.position + 1 });
+  // shift positions of subsequent blocks
+  const sibs = blocksFor(p.id).filter(x => x.position > b.position);
+  for (const s of sibs) { s.position += 1; await saveBlock(s); }
+  await saveBlock(newB);
+  if (p.is_database) renderDatabase(p); else renderBlocks(p);
+  setTimeout(() => {
+    const el = document.querySelector(`.block[data-block-id="${newB.id}"] .block-content[contenteditable]`);
+    if (el) el.focus();
+  }, 20);
+}
+
+async function mergeBlockBack(blockId) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  const p = pageById(b.page_id); if (!p) return;
+  const all = blocksFor(p.id);
+  const idx = all.findIndex(x => x.id === blockId);
+  if (idx <= 0) return;
+  const prev = all[idx - 1];
+  prev.content = (prev.content || '') + (b.content || '');
+  await saveBlock(prev);
+  await deleteBlock(b.id);
+  renderBlocks(p);
+  setTimeout(() => {
+    const el = document.querySelector(`.block[data-block-id="${prev.id}"] .block-content[contenteditable]`);
+    if (el) {
+      el.focus();
+      // place cursor at the join point
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges(); sel.addRange(range);
+    }
+  }, 20);
+}
+
+async function setBlockType(blockId, newType) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  b.type = newType;
+  if (newType === 'divider') b.content = '';
+  await saveBlock(b);
+  const p = pageById(b.page_id);
+  renderBlocks(p);
+}
+
+async function openBlockMenu(blockId, btn) {
+  const b = state.blocks.get(blockId); if (!b) return;
+  const rect = btn.getBoundingClientRect();
+  const pop = popup(rect.left - 200, rect.bottom + 2);
+  const items = [
+    ...BLOCK_TYPES.map(t => ({ icon: t.icon, label: 'Turn into ' + t.label, onClick: async () => { await setBlockType(blockId, t.type); closePopup(); } })),
+    { icon: '✕', label: 'Delete block', onClick: async () => { const p = pageById(b.page_id); await deleteBlock(blockId); if (p) renderBlocks(p); closePopup(); } },
+  ];
+  for (const it of items) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span>`;
+    node.addEventListener('click', it.onClick);
+    pop.appendChild(node);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Popups (slash, wiki, generic)
+// ════════════════════════════════════════════════════════════════
+let currentPopup = null;
+let currentPopupKind = null;
+let currentPopupItems = []; let currentPopupIdx = 0; let currentPopupContext = null;
+
+function popup(x, y) {
+  closePopup();
+  const el = document.createElement('div');
+  el.className = 'popup';
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el);
+  currentPopup = el;
+  currentPopupKind = 'generic';
+  setTimeout(() => document.addEventListener('click', popupOutsideClick), 0);
+  return el;
+}
+function closePopup(kind) {
+  if (kind && currentPopupKind !== kind) return;
+  if (currentPopup) currentPopup.remove();
+  currentPopup = null; currentPopupKind = null; currentPopupItems = []; currentPopupIdx = 0; currentPopupContext = null;
+  document.removeEventListener('click', popupOutsideClick);
+}
+function popupOutsideClick(e) {
+  if (currentPopup && !currentPopup.contains(e.target)) closePopup();
+}
+function popupMove(delta) {
+  if (!currentPopupItems.length) return;
+  currentPopupIdx = (currentPopupIdx + delta + currentPopupItems.length) % currentPopupItems.length;
+  const items = currentPopup.querySelectorAll('.pop-item');
+  items.forEach((it, i) => it.classList.toggle('active', i === currentPopupIdx));
+  const active = items[currentPopupIdx]; if (active) active.scrollIntoView({ block: 'nearest' });
+}
+function popupChoose() {
+  const it = currentPopupItems[currentPopupIdx]; if (it && it.onChoose) it.onChoose();
+}
+
+function showSlashMenu(blockId, blockEl, filter) {
+  const rect = blockEl.getBoundingClientRect();
+  const pop = popup(rect.left, rect.bottom + 4);
+  currentPopupKind = 'slash';
+  currentPopupContext = { blockId };
+  const items = BLOCK_TYPES.filter(t => !filter || t.label.toLowerCase().includes(filter.toLowerCase()) || t.type.includes(filter.toLowerCase())).map(t => ({
+    label: t.label, icon: t.icon, hint: t.hint,
+    onChoose: async () => {
+      const b = state.blocks.get(blockId);
+      if (b) { b.content = ''; await saveBlock(b); }
+      await setBlockType(blockId, t.type);
+      closePopup();
+      setTimeout(() => {
+        const el = document.querySelector(`.block[data-block-id="${blockId}"] .block-content[contenteditable]`);
+        if (el) el.focus();
+      }, 20);
+    }
+  }));
+  currentPopupItems = items; currentPopupIdx = 0;
+  if (items.length === 0) { closePopup(); return; }
+  const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Block types'; pop.appendChild(sec);
+  for (const it of items) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span><span class="hint">${esc(it.hint)}</span>`;
+    node.addEventListener('click', it.onChoose);
+    pop.appendChild(node);
+  }
+  popupMove(0);
+}
+
+function showWikiMenu(blockId, blockEl, filter) {
+  const rect = blockEl.getBoundingClientRect();
+  const pop = popup(rect.left, rect.bottom + 4);
+  currentPopupKind = 'wiki';
+  currentPopupContext = { blockId };
+  const matches = Array.from(state.pages.values())
+    .filter(p => !p.title || p.title.toLowerCase().includes((filter || '').toLowerCase()))
+    .filter(p => p.id !== state.currentPageId)
+    .slice(0, 12);
+  const items = matches.map(p => ({
+    label: p.title || 'Untitled', icon: p.is_database ? '⛁' : (p.icon || '📄'),
+    onChoose: async () => {
+      // Replace the [[partial in the block with [[title]]
+      const b = state.blocks.get(blockId); if (!b) return;
+      const sel = window.getSelection();
+      if (sel.rangeCount === 0) { closePopup(); return; }
+      const txt = b.content;
+      const idx = txt.lastIndexOf('[[');
+      if (idx === -1) { closePopup(); return; }
+      b.content = txt.slice(0, idx) + '[[' + (p.title || 'Untitled') + ']]';
+      await saveBlock(b);
+      const ce = blockEl;
+      ce.innerText = b.content;
+      // place cursor at end
+      const range = document.createRange(); range.selectNodeContents(ce); range.collapse(false);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(range);
+      closePopup();
+    }
+  }));
+  // also offer "Create page: X"
+  if (filter && filter.trim()) {
+    items.push({ label: 'Create page: ' + filter, icon: '＋', onChoose: async () => {
+      closePopup();
+      const np = makePage({ title: filter.trim() });
+      await savePage(np);
+      await saveBlock(makeBlock({ page_id: np.id, position: 0 }));
+      // insert link in current block
+      const b = state.blocks.get(blockId); if (!b) return;
+      const txt = b.content;
+      const idx = txt.lastIndexOf('[[');
+      if (idx === -1) return;
+      b.content = txt.slice(0, idx) + '[[' + np.title + ']]';
+      await saveBlock(b);
+      renderBlocks(pageById(b.page_id));
+      renderSidebar();
+    }});
+  }
+  currentPopupItems = items; currentPopupIdx = 0;
+  if (items.length === 0) { closePopup(); return; }
+  const sec = document.createElement('div'); sec.className = 'pop-section'; sec.textContent = 'Link to page'; pop.appendChild(sec);
+  for (const it of items) {
+    const node = document.createElement('div'); node.className = 'pop-item';
+    node.innerHTML = `<span class="icon">${it.icon}</span><span class="label">${esc(it.label)}</span>`;
+    node.addEventListener('click', it.onChoose);
+    pop.appendChild(node);
+  }
+  popupMove(0);
+}
+
+async function createPageFromWiki(title) {
+  const existing = pageByTitle(title);
+  if (existing) { openPage(existing.id); return; }
+  const np = makePage({ title });
+  await savePage(np);
+  await saveBlock(makeBlock({ page_id: np.id, position: 0 }));
+  openPage(np.id);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Backlinks
+// ════════════════════════════════════════════════════════════════
+function renderBacklinks(p) {
+  const el = $('#backlinks');
+  const refs = [];
+  for (const b of state.blocks.values()) {
+    const c = b.content || '';
+    const matches = c.match(/\[\[([^\]]+)\]\]/g);
+    if (matches) {
+      for (const m of matches) {
+        const t = m.slice(2, -2);
+        if (t.toLowerCase() === (p.title || '').toLowerCase() && b.page_id !== p.id) {
+          refs.push(b);
+        }
+      }
+    }
+  }
+  if (refs.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '<h4>↩ Linked from ' + refs.length + ' block' + (refs.length === 1 ? '' : 's') + '</h4>';
+  for (const b of refs) {
+    const src = pageById(b.page_id);
+    if (!src) continue;
+    const ctx = (b.content || '').replace(new RegExp('\\[\\[' + (p.title || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\]', 'gi'), m => `<mark>${esc(m)}</mark>`);
+    const item = document.createElement('div'); item.className = 'bl-item';
+    item.innerHTML = `<div class="src">${esc(src.title || 'Untitled')}</div><div class="ctx">${ctx.length > 280 ? ctx.slice(0, 280) + '…' : ctx}</div>`;
+    item.addEventListener('click', () => openPage(b.page_id));
+    el.appendChild(item);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Search
+// ════════════════════════════════════════════════════════════════
+function onSidebarSearch(q) {
+  if (!q || q.trim().length < 2) { state.filteredTree = null; renderSidebar(); return; }
+  const ql = q.toLowerCase();
+  const matches = new Set();
+  for (const p of state.pages.values()) {
+    if ((p.title || '').toLowerCase().includes(ql)) matches.add(p.id);
+  }
+  for (const b of state.blocks.values()) {
+    if ((b.content || '').toLowerCase().includes(ql)) matches.add(b.page_id);
+  }
+  state.filteredTree = Array.from(matches);
+  renderSidebar();
+}
+
+// ════════════════════════════════════════════════════════════════
+// Command palette
+// ════════════════════════════════════════════════════════════════
+function openCommandPalette() {
+  const bg = $('#modalBg');
+  bg.innerHTML = `
+    <div class="modal cmd-modal">
+      <input type="text" id="cmdInput" placeholder="Jump to page or type a command…" autofocus>
+      <div class="cmd-results" id="cmdResults"></div>
+    </div>`;
+  bg.classList.add('open');
+  const input = $('#cmdInput');
+  const results = $('#cmdResults');
+  let activeIdx = 0;
+  let currentItems = [];
+  function renderResults(q) {
+    q = (q || '').toLowerCase();
+    const items = [];
+    items.push({ kind: 'cmd', label: '+ New page', icon: '＋', onChoose: () => { closeModal(); newPage(); } });
+    items.push({ kind: 'cmd', label: '+ New database', icon: '⛁', onChoose: () => { closeModal(); newDatabase(); } });
+    items.push({ kind: 'cmd', label: '⤓ Export workspace as JSON', icon: '⤓', onChoose: () => { closeModal(); exportWorkspace(); } });
+    items.push({ kind: 'cmd', label: '⤒ Import', icon: '⤒', onChoose: () => { closeModal(); openImport(); } });
+    items.push({ kind: 'cmd', label: '⚙ Settings', icon: '⚙', onChoose: () => { closeModal(); openSettings(); } });
+    let filtered = q ? items.filter(it => it.label.toLowerCase().includes(q)) : items;
+    // page jump
+    for (const p of state.pages.values()) {
+      if (!q || (p.title || '').toLowerCase().includes(q)) {
+        filtered.push({ kind: 'page', label: p.title || 'Untitled', icon: p.is_database ? '⛁' : (p.icon || '📄'), ctx: p.is_database ? 'database' : 'page', onChoose: () => { closeModal(); openPage(p.id); } });
+      }
+    }
+    filtered = filtered.slice(0, 30);
+    currentItems = filtered;
+    activeIdx = 0;
+    results.innerHTML = filtered.map((it, i) => `<div class="cmd-item ${i === 0 ? 'active' : ''}" data-i="${i}"><span class="icon">${it.icon}</span><span class="lbl">${esc(it.label)}</span>${it.ctx ? `<span class="ctx">${esc(it.ctx)}</span>` : ''}</div>`).join('');
+    results.querySelectorAll('.cmd-item').forEach(el => el.addEventListener('click', () => filtered[Number(el.dataset.i)].onChoose()));
+  }
+  renderResults('');
+  input.addEventListener('input', () => renderResults(input.value));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (!currentItems.length) return; activeIdx = (activeIdx + 1) % currentItems.length; updActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (!currentItems.length) return; activeIdx = (activeIdx - 1 + currentItems.length) % currentItems.length; updActive(); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (currentItems[activeIdx]) currentItems[activeIdx].onChoose(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
+  });
+  function updActive() {
+    results.querySelectorAll('.cmd-item').forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+    const active = results.querySelector('.cmd-item.active'); if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Settings / Export / Import
+// ════════════════════════════════════════════════════════════════
+function closeModal() { $('#modalBg').classList.remove('open'); $('#modalBg').innerHTML = ''; }
+$('#modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+
+function openSettings() {
+  const total = state.pages.size;
+  const blocks = state.blocks.size;
+  $('#modalBg').innerHTML = `
+    <div class="modal">
+      <span class="close" onclick="closeModal()">×</span>
+      <h3>Settings</h3>
+      <div class="row" style="font-family:var(--mono);font-size:11px;color:var(--cream-muted);letter-spacing:.04em;line-height:1.7">
+        <div>◊ ${total} pages · ${blocks} blocks · all local · IndexedDB</div>
+      </div>
+      <div class="row">
+        <label>Wipe everything</label>
+        <button class="btn danger" onclick="wipeAll()">Reset workspace (cannot be undone)</button>
+      </div>
+      <div class="row" style="margin-top:14px;color:var(--cream-muted);font-size:12px;line-height:1.6">
+        <div>fallnote v1.0 · MIT · sovereign single-HTML PWA · part of the AI Native Solutions estate.<br>Source: <a href="https://github.com/sjgant80-hub/fallnote" target="_blank">github.com/sjgant80-hub/fallnote</a> · Estate: <a href="https://www.ai-nativesolutions.com" target="_blank">ai-nativesolutions.com</a></div>
+      </div>
+    </div>`;
+  $('#modalBg').classList.add('open');
+}
+
+async function wipeAll() {
+  if (!confirm('Delete EVERY page and block from this browser? Cannot be undone.')) return;
+  await db.close();
+  await new Promise((resolve, reject) => {
+    const r = indexedDB.deleteDatabase(DB_NAME);
+    r.onsuccess = resolve; r.onerror = reject;
+  });
+  location.reload();
+}
+
+function openExport() {
+  $('#modalBg').innerHTML = `
+    <div class="modal">
+      <span class="close" onclick="closeModal()">×</span>
+      <h3>Export</h3>
+      <div class="row"><label>Whole workspace</label><button class="btn brass" onclick="exportWorkspace()">⤓ Download JSON</button></div>
+      <div class="row"><label>Current page</label><button class="btn brass" onclick="exportPageMd(state.currentPageId)" ${state.currentPageId ? '' : 'disabled'}>⤓ Download .md</button></div>
+      <div class="row" style="color:var(--cream-muted);font-size:11px;line-height:1.5">
+        JSON contains every page, every block, every database — fully restorable into any fallnote install. Markdown export per-page is for hand-off to other tools (loses database structure).
+      </div>
+    </div>`;
+  $('#modalBg').classList.add('open');
+}
+
+function exportWorkspace() {
+  const data = {
+    fallnote_version: '1.0',
+    exported_at: now(),
+    pages: Array.from(state.pages.values()),
+    blocks: Array.from(state.blocks.values()),
+  };
+  downloadFile(JSON.stringify(data, null, 2), 'fallnote-workspace-' + Date.now() + '.json', 'application/json');
+  toast('Workspace exported');
+  closeModal();
+}
+
+function exportPageMd(pageId) {
+  const p = pageById(pageId); if (!p) return;
+  const lines = [`# ${p.icon || ''} ${p.title || 'Untitled'}`, ''];
+  if (p.is_database) {
+    const rows = childrenOf(p.id);
+    const props = p.schema.properties;
+    lines.push('|' + props.map(pr => ' ' + pr.name + ' ').join('|') + '|');
+    lines.push('|' + props.map(() => '---').join('|') + '|');
+    for (const r of rows) {
+      lines.push('|' + props.map(pr => {
+        const v = pr.key === 'title' ? r.title : r.properties?.[pr.key];
+        return ' ' + (Array.isArray(v) ? v.join(', ') : (v == null ? '' : String(v))) + ' ';
+      }).join('|') + '|');
+    }
+  } else {
+    const blocks = blocksFor(p.id);
+    let n = 1;
+    for (const b of blocks) {
+      const c = b.content || '';
+      if (b.type === 'h1') lines.push('# ' + c);
+      else if (b.type === 'h2') lines.push('## ' + c);
+      else if (b.type === 'h3') lines.push('### ' + c);
+      else if (b.type === 'bullet') lines.push('- ' + c);
+      else if (b.type === 'numbered') { lines.push(n + '. ' + c); n++; continue; }
+      else if (b.type === 'todo') lines.push('- [' + (b.checked ? 'x' : ' ') + '] ' + c);
+      else if (b.type === 'quote') lines.push('> ' + c);
+      else if (b.type === 'callout') lines.push('> [!NOTE] ' + c);
+      else if (b.type === 'code') lines.push('```\n' + c + '\n```');
+      else if (b.type === 'divider') lines.push('---');
+      else if (b.type === 'link-to-page') { const lp = pageById(b.page_link_id); lines.push('[[' + (lp ? lp.title : 'broken') + ']]'); }
+      else lines.push(c);
+      n = 1;
+      lines.push('');
+    }
+  }
+  downloadFile(lines.join('\n'), (p.title || 'page') + '.md', 'text/markdown');
+  toast('Markdown downloaded');
+}
+
+function openImport() {
+  $('#modalBg').innerHTML = `
+    <div class="modal">
+      <span class="close" onclick="closeModal()">×</span>
+      <h3>Import</h3>
+      <div class="row">
+        <label>Markdown (.md)</label>
+        <input type="file" id="importMd" accept=".md,.markdown,text/markdown" multiple>
+      </div>
+      <div class="row">
+        <label>JSON workspace</label>
+        <input type="file" id="importJson" accept=".json,application/json">
+      </div>
+      <div class="row-btns">
+        <button class="btn ghost" onclick="closeModal()">Close</button>
+      </div>
+    </div>`;
+  $('#modalBg').classList.add('open');
+  $('#importMd').addEventListener('change', e => importMarkdown(e.target.files));
+  $('#importJson').addEventListener('change', e => importWorkspace(e.target.files[0]));
+}
+
+async function importMarkdown(files) {
+  let n = 0;
+  for (const f of files) {
+    const txt = await f.text();
+    const lines = txt.split(/\r?\n/);
+    const title = (lines[0].replace(/^#+\s*/, '').trim()) || f.name.replace(/\.md$/, '');
+    const p = makePage({ title });
+    await savePage(p);
+    let pos = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      let type = 'paragraph'; let content = line; let checked = false;
+      if (/^#\s+/.test(line)) { type = 'h1'; content = line.replace(/^#\s+/, ''); }
+      else if (/^##\s+/.test(line)) { type = 'h2'; content = line.replace(/^##\s+/, ''); }
+      else if (/^###\s+/.test(line)) { type = 'h3'; content = line.replace(/^###\s+/, ''); }
+      else if (/^-\s+\[[ x]\]\s+/.test(line)) { type = 'todo'; checked = /\[x\]/.test(line); content = line.replace(/^-\s+\[[ x]\]\s+/, ''); }
+      else if (/^-\s+/.test(line)) { type = 'bullet'; content = line.replace(/^-\s+/, ''); }
+      else if (/^\d+\.\s+/.test(line)) { type = 'numbered'; content = line.replace(/^\d+\.\s+/, ''); }
+      else if (/^>\s+/.test(line)) { type = 'quote'; content = line.replace(/^>\s+/, ''); }
+      else if (/^---+$/.test(line)) { type = 'divider'; content = ''; }
+      else if (/^```/.test(line)) {
+        // code block — gather until closing
+        let codeLines = [];
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) { codeLines.push(lines[i]); i++; }
+        type = 'code'; content = codeLines.join('\n');
+      }
+      if (line.trim() === '' && type === 'paragraph') continue;
+      const b = makeBlock({ page_id: p.id, type, content, checked, position: pos++ });
+      await saveBlock(b);
+    }
+    n++;
+  }
+  toast(n + ' page' + (n === 1 ? '' : 's') + ' imported');
+  closeModal();
+  render();
+}
+
+async function importWorkspace(file) {
+  if (!file) return;
+  const txt = await file.text();
+  let data;
+  try { data = JSON.parse(txt); } catch (e) { toast('Invalid JSON', true); return; }
+  if (data.fallnote_version) {
+    for (const p of data.pages || []) { state.pages.set(p.id, p); await dbPut('pages', p); }
+    for (const b of data.blocks || []) { state.blocks.set(b.id, b); await dbPut('blocks', b); }
+    toast((data.pages?.length || 0) + ' pages, ' + (data.blocks?.length || 0) + ' blocks imported');
+  } else {
+    // Notion JSON export (best-effort)
+    toast('Notion JSON import: best-effort, single-page only', true);
+  }
+  closeModal();
+  render();
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Sidebar toggle (mobile)
+// ════════════════════════════════════════════════════════════════
+function toggleSidebar() { $('#app').classList.toggle('mobile-sidebar-open'); }
+
+// ════════════════════════════════════════════════════════════════
+// Onboarding: first-load welcome content
+// ════════════════════════════════════════════════════════════════
+async function seedWelcomeIfEmpty() {
+  if (state.pages.size > 0) return;
+  // Welcome page
+  const welcome = makePage({ title: 'Welcome to fallnote', icon: '◊', position: 0 });
+  await savePage(welcome);
+  const blocks = [
+    { type: 'h1', content: 'Welcome to fallnote' },
+    { type: 'paragraph', content: 'A sovereign block-based note + database substrate. Your Notion alternative — local, MIT, single HTML file.' },
+    { type: 'h2', content: 'Try it' },
+    { type: 'callout', content: 'Type / for the block menu · type [[ to link to a page · type **bold** *italic* `code` ~~strike~~ as you write.' },
+    { type: 'h3', content: 'Keyboard' },
+    { type: 'bullet', content: 'Enter = new block' },
+    { type: 'bullet', content: 'Shift+Enter = line break in block' },
+    { type: 'bullet', content: 'Backspace at start = merge with previous' },
+    { type: 'bullet', content: 'Ctrl/Cmd + K = command palette' },
+    { type: 'h3', content: 'What this is NOT' },
+    { type: 'paragraph', content: 'Not a SaaS. Not a subscription. Not synced anywhere by default. Your data lives in this browser. Export the workspace anytime — it is one .json file you own.' },
+    { type: 'h3', content: 'Try a database' },
+    { type: 'paragraph', content: 'Click + Database in the sidebar to make a structured table. Add properties, fill rows, sort, filter.' },
+    { type: 'divider', content: '' },
+    { type: 'quote', content: 'If you stop paying for SaaS, you stop using it. If you stop paying for fallnote, you keep using it. There is no paying for fallnote.' },
+    { type: 'paragraph', content: 'Built by Simon Gant · part of the [[AI Native Solutions]] estate · ai-nativesolutions.com' },
+  ];
+  for (let i = 0; i < blocks.length; i++) {
+    const b = makeBlock({ page_id: welcome.id, position: i, type: blocks[i].type, content: blocks[i].content });
+    await saveBlock(b);
+  }
+  // Example database
+  const tasks = makePage({ title: 'Tasks (example database)', icon: '⛁', is_database: true, position: 1 });
+  tasks.schema = dbSchemaDefault();
+  await savePage(tasks);
+  const sampleRows = [
+    { title: 'Try fallnote', status: 'Doing', due: new Date().toISOString().slice(0, 10), tags: ['fallnote'], notes: '' },
+    { title: 'Read the spec', status: 'Todo', due: null, tags: ['fallnote', 'spec'], notes: '' },
+    { title: 'Fork this seed', status: 'Todo', due: null, tags: [], notes: 'optional' },
+  ];
+  for (let i = 0; i < sampleRows.length; i++) {
+    const r = sampleRows[i];
+    const row = makePage({ parent_page_id: tasks.id, title: r.title, position: i });
+    row.properties = { title: r.title, status: r.status, due: r.due, tags: r.tags, notes: r.notes };
+    await savePage(row);
+    await saveBlock(makeBlock({ page_id: row.id, position: 0 }));
+  }
+  state.currentPageId = welcome.id;
+  state.treeExpanded.add(welcome.id);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Boot
+// ════════════════════════════════════════════════════════════════
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openCommandPalette(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p' && !e.shiftKey) { e.preventDefault(); openCommandPalette(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); toast('auto-saved'); }
+});
+
+(async () => {
+  try {
+    await openDB();
+    await loadAll();
+    const meta = await dbGet('meta', 'currentPageId');
+    if (meta && state.pages.has(meta.value)) state.currentPageId = meta.value;
+    await seedWelcomeIfEmpty();
+    if (!state.currentPageId) {
+      const first = childrenOf(null)[0];
+      if (first) state.currentPageId = first.id;
+    }
+    if (state.currentPageId) {
+      let p = pageById(state.currentPageId);
+      while (p && p.parent_page_id) { state.treeExpanded.add(p.parent_page_id); p = pageById(p.parent_page_id); }
+    }
+    render();
+  } catch (e) {
+    console.error('boot failed', e);
+    document.body.innerHTML = '<div style="padding:40px;color:#e6e1d6;background:#0b0a0f;min-height:100vh;font-family:Inter,sans-serif"><h1 style="color:#b8974a">fallnote could not start</h1><p>' + esc(e.message) + '</p><p>Try: Ctrl+Shift+Delete to clear site data, then reload.</p></div>';
+  }
+})();
+</script>
+</body>
+</html>
