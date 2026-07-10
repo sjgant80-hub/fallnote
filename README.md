@@ -33,7 +33,7 @@ What you get:
 
 - **Your data lives in your browser's IndexedDB.** Never sent anywhere.
 - **No analytics. No tracking. No telemetry.** Open DevTools → Network — nothing leaves your machine.
-- **No subscription. No login. No account.** Open the page, you have it.
+- **not subscription-based. No login. No account.** Open the page, you have it.
 - **MIT-licensed.** Fork it. Modify it. Sell your fork. Whatever.
 - **One file.** ~50KB gzipped. Save the HTML to disk and it runs offline forever.
 - **If I disappear**, the file you saved keeps working.

@@ -510,22 +510,19 @@ main.content .empty-page button:hover { background: var(--amber); }
     'llama-3b':  { id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',   size: '~2GB',   label: '3B · balanced · default · most laptops' },
     'qwen-7b':   { id: 'Qwen2.5-7B-Instruct-q4f16_1-MLC',     size: '~5GB',   label: '7B · capable · needs decent GPU (M-series Mac / 8GB+ VRAM)' },
     'llama-8b':  { id: 'Llama-3.1-8B-Instruct-q4f16_1-MLC',   size: '~5GB',   label: '8B · common · needs decent GPU' },
-    'llama-70b': { id: 'Llama-3.1-70B-Instruct-q4f16_1-MLC',  size: '~40GB',  label: '70B · frontier · needs serious GPU + 64GB+ RAM' },
-  };
+    'llama-70b': { id: 'Llama-3.1-70B-Instruct-q4f16_1-MLC',  size: '~40GB',  label: '70B · frontier · needs serious GPU + 64GB+ RAM' }};
   const DEFAULT_MODEL = 'llama-3b';
 
   const T3_PROVIDERS = {
     anthropic: { label: 'Anthropic Claude', models: ['claude-sonnet-4-5','claude-opus-4-7','claude-haiku-4-5'], default: 'claude-sonnet-4-5', url: 'https://api.anthropic.com/v1/messages' },
     openai:    { label: 'OpenAI',           models: ['gpt-4o','gpt-4o-mini','o1-mini'],                          default: 'gpt-4o-mini',      url: 'https://api.openai.com/v1/chat/completions' },
-    google:    { label: 'Google Gemini',    models: ['gemini-1.5-pro','gemini-1.5-flash','gemini-2.0-flash-exp'], default: 'gemini-1.5-flash', url: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  };
+    google:    { label: 'Google Gemini',    models: ['gemini-1.5-pro','gemini-1.5-flash','gemini-2.0-flash-exp'], default: 'gemini-1.5-flash', url: 'https://generativelanguage.googleapis.com/v1beta/models/' }};
 
   // ─── State ───────────────────────────────────────────────────────
   const STATE = {
     config: loadConfig(),
     ai: { ready: false, loading: false, progress: 0, engine: null, model: null },
-    mesh: { active: false, peers: new Map(), bc: null, signal: null },
-  };
+    mesh: { active: false, peers: new Map(), bc: null, signal: null }};
 
   function loadConfig() {
     try { return JSON.parse(localStorage.getItem('fall-kit.config') || '{}'); }
@@ -592,8 +589,7 @@ main.content .empty-page button:hover { background: var(--amber); }
     if (tier === 'T2' && STATE.ai.ready && STATE.ai.engine) {
       const r = await STATE.ai.engine.chat.completions.create({
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }],
-        max_tokens: maxTokens,
-      });
+        max_tokens: maxTokens});
       return r.choices[0].message.content;
     }
     if (tier === 'T3' && STATE.config.api_key && STATE.config.api_provider) {
@@ -610,8 +606,7 @@ main.content .empty-page button:hover { background: var(--amber); }
       const r = await fetch(T3_PROVIDERS.anthropic.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model, max_tokens: maxTokens, system: sys, messages: [{ role: 'user', content: msg }] }),
-      });
+        body: JSON.stringify({ model, max_tokens: maxTokens, system: sys, messages: [{ role: 'user', content: msg }] })});
       if (!r.ok) throw new Error('Anthropic ' + r.status + ': ' + (await r.text()).slice(0, 200));
       const j = await r.json();
       return j.content[0].text;
@@ -620,8 +615,7 @@ main.content .empty-page button:hover { background: var(--amber); }
       const r = await fetch(T3_PROVIDERS.openai.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'system', content: sys }, { role: 'user', content: msg }] }),
-      });
+        body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'system', content: sys }, { role: 'user', content: msg }] })});
       if (!r.ok) throw new Error('OpenAI ' + r.status);
       const j = await r.json();
       return j.choices[0].message.content;
@@ -630,8 +624,7 @@ main.content .empty-page button:hover { background: var(--amber); }
       const r = await fetch(T3_PROVIDERS.google.url + model + ':generateContent?key=' + encodeURIComponent(key), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: sys + '\n\n---\n\n' + msg }] }], generationConfig: { maxOutputTokens: maxTokens } }),
-      });
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: sys + '\n\n---\n\n' + msg }] }], generationConfig: { maxOutputTokens: maxTokens } })});
       if (!r.ok) throw new Error('Google ' + r.status);
       const j = await r.json();
       return j.candidates[0].content.parts[0].text;
@@ -872,8 +865,7 @@ main.content .empty-page button:hover { background: var(--amber); }
     openMint: openMint,  // v1.2 · launch kcc-mint with this seed prefilled as parent
     MODELS: WEBLLM_MODELS,
     PROVIDERS: T3_PROVIDERS,
-    state: STATE,
-  };
+    state: STATE};
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -949,16 +941,14 @@ const BLOCK_TYPES = [
   { type: 'code',      label: 'Code', icon: '</>', hint: 'code block' },
   { type: 'image',     label: 'Image', icon: '🖼', hint: 'paste, drag, or pick' },
   { type: 'divider',   label: 'Divider', icon: '—', hint: 'horizontal rule' },
-  { type: 'link-to-page', label: 'Link to page', icon: '↪', hint: 'reference' },
-];
+  { type: 'link-to-page', label: 'Link to page', icon: '↪', hint: 'reference' }];
 const PROP_TYPES = [
   { type: 'text', label: 'Text' },
   { type: 'number', label: 'Number' },
   { type: 'date', label: 'Date' },
   { type: 'select', label: 'Select' },
   { type: 'multi-select', label: 'Multi-select' },
-  { type: 'checkbox', label: 'Checkbox' },
-];
+  { type: 'checkbox', label: 'Checkbox' }];
 const COLORS = ['green','amber','red','blue','violet','pink','teal'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1025,8 +1015,7 @@ const state = {
   recent: [],
   theme: 'dark',
   dbView: new Map(),           // dbId -> { kind: 'table'|'board'|'calendar', groupBy?, filterBy?, sortBy?, sortDir?, calMonth? }
-  saveTimer: null,
-};
+  saveTimer: null};
 
 const uid = (p='') => p + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const now = () => new Date().toISOString();
@@ -1054,8 +1043,7 @@ function makePage(opts = {}) {
     properties: opts.properties || null,
     position: opts.position || 0,
     deleted_at: null,
-    created_at: now(), updated_at: now(),
-  };
+    created_at: now(), updated_at: now()};
 }
 function makeBlock(opts = {}) {
   return {
@@ -1069,8 +1057,7 @@ function makeBlock(opts = {}) {
     image_data: opts.image_data || null,
     position: opts.position || 0,
     deleted_at: null,
-    created_at: now(), updated_at: now(),
-  };
+    created_at: now(), updated_at: now()};
 }
 function dbSchemaDefault() {
   return {
@@ -1080,8 +1067,7 @@ function dbSchemaDefault() {
           {name:'Todo', color:'amber'}, {name:'Doing', color:'blue'}, {name:'Done', color:'green'}] },
       { key: 'due', name: 'Due', type: 'date' },
       { key: 'tags', name: 'Tags', type: 'multi-select', options: [] },
-      { key: 'notes', name: 'Notes', type: 'text' },
-    ]
+      { key: 'notes', name: 'Notes', type: 'text' }]
   };
 }
 
@@ -1166,11 +1152,11 @@ function mdInline(s) {
       const dataId = p ? `data-page-id="${p.id}"` : '';
       return `<span class="${cls}" ${dataId} data-wiki="${esc(t)}">${esc(t)}</span>`;
     })
-    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/(^|\s)\*([^*\n]+)\*/g, '$1<em>$2</em>')
-    .replace(/~~([^~\n]+)~~/g, '<s>$1</s>')
-    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>TBA</strong>')
+    .replace(/(^|\s)\*([^*\n]+)\*/g, 'TBA<em>TBA</em>')
+    .replace(/~~([^~\n]+)~~/g, '<s>TBA</s>')
+    .replace(/`([^`\n]+)`/g, '<code>TBA</code>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="TBA" target="_blank" rel="noopener">TBA</a>');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2516,8 +2502,7 @@ async function seedWelcomeIfEmpty() {
     { type: 'paragraph', content: 'Click **+ DB** in the sidebar — your new database opens with a default schema. Switch between Table / Board / Calendar in the toolbar. Drag cards between columns. Click any row-handle (⋮) to open that row as a sub-page.' },
     { type: 'divider', content: '' },
     { type: 'quote', content: 'If you stop paying for SaaS, you stop using it. If you stop paying for fallnote, you keep using it. There is no paying for fallnote.' },
-    { type: 'paragraph', content: 'Built by Simon Gant · part of the [[AI Native Solutions]] estate · ai-nativesolutions.com' },
-  ];
+    { type: 'paragraph', content: 'Built by Simon Gant · part of the [[AI Native Solutions]] estate · ai-nativesolutions.com' }];
   for (let i = 0; i < seedBlocks.length; i++) await saveBlock(makeBlock({ page_id: welcome.id, position: i, type: seedBlocks[i].type, content: seedBlocks[i].content }));
 
   const tasks = makePage({ title: 'Tasks · example board', icon: '⛁', is_database: true, position: 1 });
@@ -2527,8 +2512,7 @@ async function seedWelcomeIfEmpty() {
     { title: 'Switch to Board view', status: 'Todo', due: null, tags: ['fallnote'] },
     { title: 'Drag a card between columns', status: 'Todo', due: null, tags: [] },
     { title: 'Open Calendar view', status: 'Todo', due: null, tags: [] },
-    { title: 'Fork this seed', status: 'Done', due: null, tags: ['done'] },
-  ];
+    { title: 'Fork this seed', status: 'Done', due: null, tags: ['done'] }];
   for (let i = 0; i < sampleRows.length; i++) {
     const r = sampleRows[i]; const row = makePage({ parent_page_id: tasks.id, title: r.title, position: i }); row.is_row = true;
     row.properties = { title: r.title, status: r.status, due: r.due, tags: r.tags, notes: '' };
