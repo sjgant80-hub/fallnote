@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>◊ fallnote · the Notion killer · sovereign single-HTML block editor</title>
-<meta name="description" content="fallnote — sovereign block-based note + database substrate. Pages, nested pages, databases with table view, slash commands, wiki links, backlinks, markdown shortcuts. Single HTML PWA, IndexedDB primary, MIT. The Notion killer.">
+<title>fallnote · a Notion alternative · private single-HTML block editor</title>
+<meta name="description" content="fallnote — sovereign block-based note + database substrate. Pages, nested pages, databases with table view, slash commands, wiki links, backlinks, markdown shortcuts. Single HTML PWA, IndexedDB primary, MIT. A Notion alternative.">
 <meta name="prime" content="1283">
 <meta name="category" content="behaviour">
-<link rel="manifest" href='data:application/manifest+json,{"name":"fallnote","short_name":"fallnote","start_url":".","display":"standalone","background_color":"%230b0a0f","theme_color":"%23b8974a","description":"Sovereign block-based note + database substrate · Notion killer","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27><rect width=%2764%27 height=%2764%27 fill=%27%230b0a0f%27/><text x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%23b8974a%27 font-family=%27serif%27 font-weight=%27bold%27>◊</text></svg>","sizes":"any","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"fallnote","short_name":"fallnote","start_url":".","display":"standalone","background_color":"%230b0a0f","theme_color":"%23b8974a","description":"Sovereign block-based note + database substrate · Notion alternative","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27><rect width=%2764%27 height=%2764%27 fill=%27%230b0a0f%27/><text x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%23b8974a%27 font-family=%27serif%27 font-weight=%27bold%27>◊</text></svg>","sizes":"any","type":"image/svg+xml"}]}'>
 <style>
 :root {
   --void:#0b0a0f; --void-2:#13121a; --ink:#1a1922; --ink-hover:#22212c;
@@ -1549,7 +1549,7 @@ function openSettings() {
         <button class="btn danger" onclick="wipeAll()">Reset workspace (cannot be undone)</button>
       </div>
       <div class="row" style="margin-top:14px;color:var(--cream-muted);font-size:12px;line-height:1.6">
-        <div>fallnote v1.0 · MIT · sovereign single-HTML PWA · part of the AI Native Solutions estate.<br>Source: <a href="https://github.com/sjgant80-hub/fallnote" target="_blank">github.com/sjgant80-hub/fallnote</a> · Estate: <a href="https://www.ai-nativesolutions.com" target="_blank">ai-nativesolutions.com</a></div>
+        <div>fallnote v1.0 · MIT · sovereign single-HTML PWA · by AI Native Solutions.<br>Source: <a href="https://github.com/sjgant80-hub/fallnote" target="_blank">github.com/sjgant80-hub/fallnote</a> · Estate: <a href="https://www.ai-nativesolutions.com" target="_blank">ai-nativesolutions.com</a></div>
       </div>
     </div>`;
   $('#modalBg').classList.add('open');
@@ -1745,7 +1745,7 @@ async function seedWelcomeIfEmpty() {
     { type: 'paragraph', content: 'Click + Database in the sidebar to make a structured table. Add properties, fill rows, sort, filter.' },
     { type: 'divider', content: '' },
     { type: 'quote', content: 'If you stop paying for SaaS, you stop using it. If you stop paying for fallnote, you keep using it. There is no paying for fallnote.' },
-    { type: 'paragraph', content: 'Built by Simon Gant · part of the [[AI Native Solutions]] estate · ai-nativesolutions.com' },
+    { type: 'paragraph', content: 'Built by Simon Gant · by [[AI Native Solutions]] · ai-nativesolutions.com' },
   ];
   for (let i = 0; i < blocks.length; i++) {
     const b = makeBlock({ page_id: welcome.id, position: i, type: blocks[i].type, content: blocks[i].content });

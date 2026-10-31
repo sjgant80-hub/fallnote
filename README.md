@@ -1,6 +1,6 @@
 # fallnote
 
-> The Notion killer. Sovereign single-HTML block-based note + database substrate.
+> A Notion alternative. Private, single-HTML block-based note + database substrate.
 
 **Live:** https://sjgant80-hub.github.io/fallnote/
 **Estate:** https://www.ai-nativesolutions.com

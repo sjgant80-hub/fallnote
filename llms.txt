@@ -1,6 +1,6 @@
 # fallnote
 
-> fallnote · the Notion killer · sovereign single-HTML block-based note + database substrate · MIT · sovereign single-file tool · MIT-licensed · Ed25519-signed · listed on FallMarket.
+> fallnote · a Notion alternative · private single-HTML block-based note + database substrate · MIT · sovereign single-file tool · MIT-licensed · Ed25519-signed · listed on FallMarket.
 
 fallnote is a sovereign tool built by the AI-Native Solutions guild. It runs on your machine, ships with source, and never phones home.
 
